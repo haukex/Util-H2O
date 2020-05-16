@@ -62,7 +62,16 @@ C<@additional_keys>.
 
 Any code references present in the hash will become methods.
 
+=item C<< -class => I<classname> >>
 
+Specify the class name into which to bless the object (as opposed to
+the default: a generated, unique package name in C<Util::H2O::>).
+
+I<Warnings:> If that package already exists, this may step on its
+toes! As opposed to the default behavior, the packages created with
+this option won't be cleaned up, so if you generate many of them,
+Perl's symbol table will fill up and use memory! Therefore, this
+option is really only meant for quick prototyping and testing.
 
 =back
 
@@ -71,7 +80,8 @@ Any code references present in the hash will become methods.
 You must supply a plain (unblessed) hash reference here. Be aware that
 this function I<does> modify the original hashref(s) by blessing it.
 
-I<Note:> The hash may not contain a key named C<DESTROY>.
+I<Note:> The hash may not contain a key named C<DESTROY>, I<unless>
+you've specified the C<-class> option.
 
 =head3 C<@additional_keys>
 
@@ -83,25 +93,33 @@ The (now blessed) C<$hashref>.
 
 =cut
 
-sub h2o {  ## no critic (RequireArgUnpacking)
-	my ($recurse,$meth);
+sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
+	my ($recurse,$meth,$class);
 	while ( @_ && $_[0] && !ref$_[0] ) {
-		if ($_[0] eq '-recurse') { $recurse = shift   }
-		elsif ($_[0] eq '-meth') { $meth    = shift   }
+		if ($_[0] eq '-recurse' ) { $recurse = shift   }
+		elsif ($_[0] eq '-meth' ) { $meth    = shift   }
+		elsif ($_[0] eq '-class') {
+			$class = (shift, shift);
+			croak "invalid -class option value"
+				if !defined $class || ref $class || !length $class;
+		}
 		else { croak "unknown option to h2o: '$_[0]'" }
 	}
 	my $hash = shift;
 	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH';
-	croak "h2o hashref may not contain a key named DESTROY" if exists $hash->{DESTROY};
+	croak "h2o hashref may not contain a key named DESTROY"
+		if !defined $class && exists $hash->{DESTROY};
 	if ($recurse) { ref eq 'HASH' and h2o(-recurse,$_) for values %$hash }
-	my $pack = sprintf('Util::H2O::_%x', $hash+0);
+	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
 	for my $k (@_, keys %$hash) {
 		my $sub = $meth && ref $$hash{$k} eq 'CODE' ? $$hash{$k}
 			: sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
 		{ no strict 'refs'; *{"${pack}::$k"} = $sub }  ## no critic (ProhibitNoStrict)
 	}
-	my $sub = sub { delete_package($pack) };
-	{ no strict 'refs'; *{$pack.'::DESTROY'} = $sub }  ## no critic (ProhibitNoStrict)
+	if ( !defined $class ) {
+		my $sub = sub { delete_package($pack) };
+		{ no strict 'refs'; *{$pack.'::DESTROY'} = $sub }  ## no critic (ProhibitNoStrict)
+	}
 	return bless $hash, $pack;
 }
 

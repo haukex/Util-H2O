@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests=>40;
+use Test::More tests=>52;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -80,6 +80,22 @@ is $o6->a->b, 'c';
 is ref $o6->a->d, 'CODE';
 is $o6->f, 'g';
 
+my $dest=0;
+my $o7 = h2o -class=>'Foo::Bar', -meth,
+	{ ijk=>'nop', rst => sub { $_[0]->ijk('wxy'); 'efg' },
+		DESTROY=>sub{$dest++} };
+isa_ok $o7, 'Foo::Bar';
+is $o7->ijk, 'nop';
+is $o7->rst, 'efg';
+is $o7->ijk, 'wxy';
+is $dest, 0;
+$o7 = undef;
+is $dest, 1;
+my $o7a = bless {}, 'Foo::Bar';
+is $o7a->ijk, undef;
+is $o7a->rst, 'efg';
+is $o7a->ijk, 'wxy';
+
 ok exception { h2o() };
 ok exception { h2o("blah") };
 ok exception { h2o(undef) };
@@ -87,3 +103,6 @@ ok exception { h2o([]) };
 ok exception { h2o(-meth,-recurse) };
 ok exception { h2o(bless {}, "SomeClass") };
 ok exception { h2o({DESTROY=>'foo'}) };
+ok exception { h2o(-class) };
+ok exception { h2o(-class=>'') };
+ok exception { h2o(-class=>[]) };
