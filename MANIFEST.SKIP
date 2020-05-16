@@ -1,0 +1,5 @@
+^Makefile$
+^MYMETA
+^MANIFEST\.
+(^|/)\.git
+^\.(travis|appveyor)\.yml$
