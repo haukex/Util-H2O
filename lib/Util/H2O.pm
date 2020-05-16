@@ -39,24 +39,47 @@ our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
 
 =head1 Description
 
+This module allows you to turn hashrefs into objects, so that instead
+of C<< $hash->{key} >> you can write C<< $hash->key >>, plus you get
+protection from typos. In addition, options are provided that allow
+you to whip up really simple classes.
+
 This module exports a single function by default.
 
 =head2 C<h2o I<@opts>, I<$hashref>, I<@additional_keys>>
 
-Turns hashrefs into objects, so that instead of C<< $hash->{key} >>
-you can write C<< $hash->key >>, plus you get protection from typos.
-Be aware that this I<does> modify the original hashref.
+=head3 C<@opts>
 
-Nested hashes can be objectified as well if you supply the
-C<-recurse> option as the first argument; additional keys apply to
-the toplevel hash only.
+=over
 
-If you supply the C<-meth> option, then any code references present
-in the hash will become methods. Even when used together with
-C<-recurse>, only code references in the toplevel hash are
-methodified.
+=item C<-recurse>
+
+Nested hashes are objectified as well. Note that none of the other
+options will be applied to the nested hashes, including
+C<@additional_keys>.
+
+=item C<-meth>
+
+Any code references present in the hash will become methods.
+
+
+
+=back
+
+=head3 C<$hashref>
+
+You must supply a plain (unblessed) hash reference here. Be aware that
+this function I<does> modify the original hashref(s) by blessing it.
 
 I<Note:> The hash may not contain a key named C<DESTROY>.
+
+=head3 C<@additional_keys>
+
+Methods will be set up for these keys even if they do not exist in the hash.
+
+=head3 Returns
+
+The (now blessed) C<$hashref>.
 
 =cut
 
