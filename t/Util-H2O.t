@@ -20,10 +20,11 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests=>52;
+use Test::More tests=>53;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
+sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->() } @w }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn)
 
 ## no critic (RequireTestLabels)
 
@@ -95,6 +96,11 @@ my $o7a = bless {}, 'Foo::Bar';
 is $o7a->ijk, undef;
 is $o7a->rst, 'efg';
 is $o7a->ijk, 'wxy';
+
+ok !grep { /redefined/i } warns {
+	h2o { abc => "def" }, qw/ abc /;
+	h2o {}, qw/ abc abc /;
+};
 
 ok exception { h2o() };
 ok exception { h2o("blah") };

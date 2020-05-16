@@ -111,7 +111,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		if !defined $class && exists $hash->{DESTROY};
 	if ($recurse) { ref eq 'HASH' and h2o(-recurse,$_) for values %$hash }
 	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
-	for my $k (@_, keys %$hash) {
+	for my $k ( keys %{{+map {$_=>1} @_, keys %$hash }} ) {
 		my $sub = $meth && ref $$hash{$k} eq 'CODE' ? $$hash{$k}
 			: sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
 		{ no strict 'refs'; *{"${pack}::$k"} = $sub }  ## no critic (ProhibitNoStrict)
