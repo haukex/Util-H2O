@@ -29,7 +29,7 @@ sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic 
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.01';
+is $Util::H2O::VERSION, '0.02';
 
 my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
