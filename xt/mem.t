@@ -16,7 +16,7 @@ ok $normal < $initial+1000, 'memory growth after normal hashrefs ('.($normal-$in
 for (1..1000) { h2o { map {$_=>$_} 1..1000 } }
 
 my ($after) = `ps -orss $$`=~/RSS\s+(\d+)/;
-ok $after < $normal+2000, 'memory growth after h2o hashrefs ('.($after-$normal).'<2000)';
+ok $after < $normal+2500, 'memory growth after h2o hashrefs ('.($after-$normal).'<2500)';
 
 for (1..1000) { h2o(-meth, { map {$_=>sub{$_}} 1..1000 })->$_ }
 

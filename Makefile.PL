@@ -12,7 +12,7 @@ WriteMakefile(
 		provides => {
 			'Util::H2O' => {
 				file => 'lib/Util/H2O.pm',
-				version => '0.04',
+				version => '0.06',
 			},
 		},
 		resources => {
@@ -34,6 +34,9 @@ WriteMakefile(
 		'Carp'                   => 0,
 		'Exporter'               => '5.58',
 		'Symbol'                 => 0,
+		( $] ge '5.008009' ? (
+		    'Hash::Util'         => '0.06',
+		):()),
 	},
 	TEST_REQUIRES => {
 		'Test::More'             => '1.302096',

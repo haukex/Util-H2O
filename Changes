@@ -1,5 +1,9 @@
 Revision history for Perl extension Util::H2O.
 
+0.06	Sun, May 17 2020
+	- WARNING: Potentially Incompatible Changes:
+		- added "-lock" option and made it the default (locks hash's keyset)
+
 0.04	Sun, May 17 2020	commit d47e94d0c0f36b88e948adf9215f7d92c836d60c
 	- added "-clean" and "-new" options
 
