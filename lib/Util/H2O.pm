@@ -67,7 +67,7 @@ one will take effect.
 
 Nested hashes are objectified as well. Note that I<none> of the other
 options will be applied to the nested hashes, including
-C<@additional_keys>.
+C<@additional_keys>. Nested arrayrefs are not recursed into.
 
 =item C<-meth>
 
