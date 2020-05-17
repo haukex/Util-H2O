@@ -17,6 +17,8 @@ perl:
 
 # coveralls.io support:
 before_install:
+    # versions >1.33 fail on Perl <5.10
+    - cpanm --notest Devel::Cover@1.33
     - cpanm --notest Devel::Cover::Report::Coveralls
 after_success:
     - cover -test -report coveralls
