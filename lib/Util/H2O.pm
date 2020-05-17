@@ -105,8 +105,11 @@ in Perl's symbol table and use memory accordingly.
 
 =head3 C<$hashref>
 
-You must supply a plain (unblessed) hash reference here. Be aware that
-this function I<does> modify the original hashref(s) by blessing it.
+You must supply a plain (unblessed) hash reference here. Be aware
+that this function I<does> modify the original hashref(s) by blessing
+it. An accessor will be set up for each key in the hash; note that
+the keys must of course be valid Perl identifiers for you to be able
+to call the method normally.
 
 When C<-clean> is I<true> (the default, unless you use C<-class>),
 the hash may not contain a key named C<DESTROY>. When C<-new> is
