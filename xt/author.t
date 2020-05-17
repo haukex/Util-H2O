@@ -81,7 +81,7 @@ diag "### ###" if @tasks;
 
 diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html";
 
-subtest 'code in POD' => sub { plan tests=>5;
+subtest 'code in POD' => sub { plan tests=>9;
 	my $verbatim = getverbatim($PERLFILES[0], qr/\b(?:synopsis)\b/i);
 	is @$verbatim, 1, 'verbatim block count' or diag explain $verbatim;
 	is capture_merged {
@@ -90,8 +90,12 @@ subtest 'code in POD' => sub { plan tests=>5;
 			$$verbatim[0];
 			is_deeply \$hash, { foo=>'bar', x=>'z', more=>'quz' }, 'synopsis \$hash';
 			is_deeply \$struct, { hello => { perl => "world!" } }, 'synopsis \$struct';
+			isa_ok \$one, 'Point';
+			is_deeply \$one, { x=>1, y=>2 }, 'synopsis \$one';
+			isa_ok \$two, 'Point';
+			is_deeply \$two, { x=>3, y=>4 }, 'synopsis \$two';
 END_CODE
-	}, "bar\nworld!\nbeans\n", 'output of synopsis correct';
+	}, "bar\nworld!\nbeans\n0.927\n", 'output of synopsis correct';
 };
 
 sub getverbatim {

@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests=>53;
+use Test::More tests => 69;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -30,7 +30,7 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.02';
+is $Util::H2O::VERSION, '0.04';
 
 my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
@@ -97,6 +97,59 @@ is $o7a->ijk, undef;
 is $o7a->rst, 'efg';
 is $o7a->ijk, 'wxy';
 
+# -clean
+sub checksym {
+	my $s = shift;
+	my ($p,$n) = $s=~/\A(.+::)?(\w+)\z/ or die $s;  ## no critic (RequireCarping)
+	my $t = defined $p ? do { no strict 'refs'; \%{$p} } : \%::;  ## no critic (ProhibitNoStrict)
+	return exists $t->{$n.'::'};
+}
+{
+	my $o = h2o {};
+	my $c = ref $o;
+	ok checksym $c;
+	$o = undef;
+	ok !checksym $c;
+}
+{
+	my $o = h2o -clean=>0, {};
+	my $c = ref $o;
+	ok checksym $c;
+	$o = undef;
+	ok checksym $c;
+}
+{
+	my $o = h2o -class=>'TestClean1', {};
+	my $c = ref $o;
+	ok checksym $c;
+	$o = undef;
+	ok checksym $c;
+}
+{
+	my $o = h2o -class=>'TestClean2', -clean=>1, {};
+	my $c = ref $o;
+	ok checksym $c;
+	$o = undef;
+	ok !checksym $c;
+}
+
+# -new
+{
+	my $o = h2o -new, {};
+	my $on = $o->new;
+	isa_ok $on, ref $o;
+}
+{
+	my $n = h2o -class=>'Quz', -new, {}, qw/ abc /;
+	isa_ok $n, 'Quz';
+	my $n2 = new_ok 'Quz';
+	is $n2->abc, undef;
+	my $n3 = Quz->new(abc=>444);
+	is $n3->abc, 444;
+	like exception { Quz->new(abc=>4,5) }, qr/\bOdd\b/;
+	like exception { Quz->new(def=>4) }, qr/\bUnknown argument\b/i;
+}
+
 ok !grep { /redefined/i } warns {
 	h2o { abc => "def" }, qw/ abc /;
 	h2o {}, qw/ abc abc /;
@@ -109,6 +162,7 @@ ok exception { h2o([]) };
 ok exception { h2o(-meth,-recurse) };
 ok exception { h2o(bless {}, "SomeClass") };
 ok exception { h2o({DESTROY=>'foo'}) };
+ok exception { h2o(-new, { new=>5 }) };
 ok exception { h2o(-class) };
 ok exception { h2o(-class=>'') };
 ok exception { h2o(-class=>[]) };
