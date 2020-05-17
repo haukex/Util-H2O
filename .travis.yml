@@ -21,4 +21,6 @@ before_install:
     - cpanm --notest Devel::Cover@1.33
     - cpanm --notest Devel::Cover::Report::Coveralls
 after_success:
+    # this will fail on Perl <5.10, but Travis doesn't report it as a failure
+    # (it's ok if it fails, we don't need coverage reports from every single version)
     - cover -test -report coveralls
