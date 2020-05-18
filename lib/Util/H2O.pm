@@ -219,6 +219,10 @@ Inspired in part by C<lock_keys> from L<Hash::Util>.
 Many, many other modules exist to simplify object creation in Perl.
 This one is mine C<;-P>
 
+Similar modules include L<Object::Adhoc|Object::Adhoc>,
+L<Object::Anon|Object::Anon>, L<Hash::AsObject|Hash::AsObject>,
+and L<Object::Result|Object::Result>.
+
 For real OO work, I like L<Moo> and L<Type::Tiny>.
 
 =head1 Author, Copyright, and License
