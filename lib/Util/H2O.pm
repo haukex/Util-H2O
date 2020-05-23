@@ -221,7 +221,9 @@ This one is mine C<;-P>
 
 Similar modules include L<Object::Adhoc|Object::Adhoc>,
 L<Object::Anon|Object::Anon>, L<Hash::AsObject|Hash::AsObject>,
-and L<Object::Result|Object::Result>.
+L<Object::Result|Object::Result>, and L<Hash::Wrap|Hash::Wrap>,
+the latter of which also contains a comprehensive list of similar
+modules.
 
 For real OO work, I like L<Moo> and L<Type::Tiny>.
 
