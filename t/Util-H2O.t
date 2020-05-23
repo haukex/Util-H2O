@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 88;
+use Test::More tests => 100;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -30,7 +30,7 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.06';
+is $Util::H2O::VERSION, '0.08';
 
 my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
@@ -90,6 +90,26 @@ my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 	is $o6->a->b, 'c';
 	is ref $o6->a->d, 'CODE';
 	is $o6->f, 'g';
+}
+{
+	my $o = h2o -meth, { x=>111, y=>sub{222} };
+	is $o->x, 111;
+	is $o->y, 222;
+	is_deeply [sort keys %$o], [qw/ x /];
+	is $o->{x}, 111;
+	SKIP: {
+		skip "Won't work on old Perls", 1 if $] lt '5.008009';
+		ok exception { my $x = $o->{y} };
+	}
+}
+{
+	my $o = h2o -meth, { x=>111, y=>sub{222} }, qw/y/;
+	is $o->x, 111;
+	is $o->y, 222;
+	is_deeply [sort keys %$o], [qw/ x /];
+	$o->{y} = 333;
+	is_deeply $o, { x=>111, y=>333 };
+	is $o->y, 222;
 }
 
 # -class
@@ -158,10 +178,16 @@ sub checksym {
 	isa_ok $n, 'Quz';
 	my $n2 = new_ok 'Quz';
 	is $n2->abc, undef;
-	my $n3 = Quz->new(abc=>444);
+	$n2->{new} = sub{die};  ## no critic (RequireCarping)
+	my $n3 = $n2->new(abc=>444);
 	is $n3->abc, 444;
 	like exception { Quz->new(abc=>4,5) }, qr/\bOdd\b/;
 	like exception { Quz->new(def=>4) }, qr/\bUnknown argument\b/i;
+	SKIP: {
+		skip "Won't work on old Perls", 2 if $] lt '5.008009';
+		ok exception { my $x = $n->{new} };
+		ok exception { my $x = $n->{DESTROY} };
+	}
 }
 
 # -lock
@@ -224,3 +250,5 @@ ok exception { h2o(-new, { new=>5 }) };
 ok exception { h2o(-class) };
 ok exception { h2o(-class=>'') };
 ok exception { h2o(-class=>[]) };
+
+done_testing;

@@ -40,7 +40,7 @@ Util::H2O - Hash to Object: turns hashrefs into objects with accessors for keys
 
 =cut
 
-our $VERSION = '0.06';
+our $VERSION = '0.08';
 # For AUTHOR, COPYRIGHT, AND LICENSE see the bottom of this file
 
 our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
@@ -87,7 +87,17 @@ C<@additional_keys>. Nested arrayrefs are not recursed into.
 
 =item C<-meth>
 
-Any code references present in the hash will become methods.
+Any code references present in the hash at the time of this function
+call will be turned into methods. Because these methods are installed
+into the object's package, they can't be changed later by modifying
+the hash.
+
+To avoid confusion when iterating over the hash, the hash entries
+that were turned into methods are removed from the hash. The key is
+also removed from the "allowed keys" (see the C<-lock> option),
+I<unless> you specify it in C<@additional_keys>. In that case, you
+can change the value of that key completely independently of the
+method with the same name.
 
 =item C<< -class => I<classname> >>
 
@@ -154,7 +164,7 @@ Methods will be set up for these keys even if they do not exist in the hash.
 
 =head3 Returns
 
-The (now blessed) C<$hashref>.
+The (now blessed and optionally locked) C<$hashref>.
 
 =cut
 
@@ -177,6 +187,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	$lock = 1 unless defined $lock;
 	my $hash = shift;
 	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH';
+	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;
 	croak "h2o hashref may not contain a key named DESTROY"
 		if $clean && exists $keys{DESTROY};
@@ -185,8 +196,9 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	if ($recurse) { ref eq 'HASH' and h2o(-recurse,$_) for values %$hash }
 	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
 	for my $k (keys %keys) {
-		my $sub = $meth && ref $$hash{$k} eq 'CODE' ? $$hash{$k}
-			: sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
+		my $sub = sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
+		if ( $meth && ref $$hash{$k} eq 'CODE' )
+			{ $sub = delete $$hash{$k}; $ak{$k} or delete $keys{$k} }
 		{ no strict 'refs'; *{"${pack}::$k"} = $sub }  ## no critic (ProhibitNoStrict)
 	}
 	if ( $clean ) {
