@@ -8,7 +8,7 @@ Tests for the Perl module L<Util::H2O>.
 
 =head1 Author, Copyright, and License
 
-Copyright (c) 2020 Hauke Daempfling (haukex@zero-g.net).
+Copyright (c) 2020-2021 Hauke Daempfling (haukex@zero-g.net).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl 5 itself.
@@ -30,7 +30,7 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.10';
+is $Util::H2O::VERSION, '0.12';
 
 my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
