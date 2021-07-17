@@ -81,9 +81,14 @@ one will take effect.
 
 =item C<-recurse>
 
-Nested hashes are objectified as well. Note that I<none> of the other
-options will be applied to the nested hashes, including
+Nested hashes are objectified as well.
+The only option that is passed down to nested hashes is C<-lock>.
+I<None> of the other options will be applied to the nested hashes, including
 C<@additional_keys>. Nested arrayrefs are not recursed into.
+
+Versions of this module before v0.12 did not pass down the C<-lock> option,
+meaning that if you used C<-nolock, -recurse> on those versions, the nested
+hashes would still be locked.
 
 =item C<-meth>
 
@@ -210,7 +215,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		if $clean && exists $keys{DESTROY};
 	croak "h2o hashref may not contain a key named new if you use the -new option"
 		if $new && exists $keys{new};
-	if ($recurse) { ref eq 'HASH' and h2o(-recurse,$_) for values %$hash }
+	if ($recurse) { ref eq 'HASH' and h2o(-recurse,-lock=>$lock,$_) for values %$hash }
 	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
 	for my $k (keys %keys) {
 		my $sub = sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };

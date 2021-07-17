@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 146;
+use Test::More tests => 150;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -76,6 +76,19 @@ my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 	is ref $o4->h, 'HASH';
 	is ref $o4->c, 'CODE';
 	is $o4->c, $code;
+}
+{
+	my $o = h2o -recurse, { foo => { bar => "quz" } };
+	SKIP: {
+		skip "Won't work on old Perls", 2 if $] lt '5.008009';
+		ok exception { $o->{abc} = 123 };
+		ok exception { $o->foo->{def} = 456 };
+	}
+	my $o2 = h2o -recurse, -nolock, { foo => { bar => "quz" } };
+	$o2->{abc} = 123;
+	$o2->foo->{def} = 456;
+	is_deeply [sort keys %$o2], [qw/ abc foo /];
+	is_deeply [sort keys %{$o2->foo}], [qw/ bar def /];
 }
 
 # -meth
