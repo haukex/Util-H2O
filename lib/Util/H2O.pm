@@ -239,6 +239,20 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 1;
 __END__
 
+=head1 Notes
+
+=head2 C<AUTOLOAD>
+
+If your hash contains a key named C<AUTOLOAD>, or this key is present in
+C<@additional_keys>, this module will set up a method called C<AUTOLOAD>, which
+is subject to Perl's normal autoloading behavior - see L<perlsub/Autoloading>
+and L<perlobj/AUTOLOAD>. Without the C<-meth> option (which is implied by
+C<-classify>), you will get a "catch-all" accessor to which all method calls to
+unknown method names will go, and with C<-meth> enabled, you can install your
+own custom C<AUTOLOAD> handler by passing a coderef as the value for this key.
+However, it is important to note that enabling autoloading removes any typo
+protection on method names.
+
 =head1 See Also
 
 Inspired in part by C<lock_keys> from L<Hash::Util>.

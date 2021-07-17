@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 128;
+use Test::More tests => 144;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -273,6 +273,40 @@ sub checksym {
 	my $n = Baz->new(abc=>123);
 	$n->{def} = 456;
 	is_deeply [sort keys %$n], [qw/ abc def /];
+}
+
+# plain AUTOLOAD
+{
+	my $o = h2o { AUTOLOAD => 123, baz => 789 }, 'abc';  ## no critic (ProhibitCommaSeparatedStatements)
+	is $o->AUTOLOAD, 123;
+	is $o->foo, 123;
+	is $o->bar(456), 456;
+	is $o->quz, 456;
+	is $o->baz, 789;
+	is $o->abc, undef;
+	$o->abc('def');
+	is $o->xyz, 456;
+	is $o->abc, 'def';
+	is $o->baz, 789;
+	is $o->AUTOLOAD, 456;
+}
+# -meth with AUTOLOAD
+{
+	my @auto;
+	my $o = h2o -meth, { AUTOLOAD => sub {
+			our $AUTOLOAD;
+			push @auto, $AUTOLOAD, [@_];
+			return 'ijk';
+		} }, 'quz';
+	is $o->foo("bar"), 'ijk';
+	is $o->bar(), 'ijk';
+	is $o->quz("baz"), 'baz';
+	is_deeply \@auto, [
+		ref($o).'::foo', [ $o, "bar" ],
+		ref($o).'::bar', [ $o ],
+	] or diag explain \@auto;
+	is $o->quz, "baz";
+	is_deeply [keys %$o], ["quz"];
 }
 
 ok !grep { /redefined/i } warns {
