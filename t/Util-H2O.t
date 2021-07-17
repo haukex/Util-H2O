@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 144;
+use Test::More tests => 146;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -178,7 +178,6 @@ sub checksym {
 	isa_ok $n, 'Quz';
 	my $n2 = new_ok 'Quz';
 	is $n2->abc, undef;
-	$n2->{new} = sub{die};  ## no critic (RequireCarping)
 	my $n3 = $n2->new(abc=>444);
 	is $n3->abc, 444;
 	like exception { Quz->new(abc=>4,5) }, qr/\bOdd\b/;
@@ -271,6 +270,19 @@ sub checksym {
 {
 	h2o -class=>'Baz', -new, {}, qw/ abc /;
 	my $n = Baz->new(abc=>123);
+	if ($] lt '5.008009') {
+		$n->{def} = 456;
+		is_deeply [sort keys %$n], [qw/ abc def /];
+		pass 'dummy'; # so the number of tests still fits
+	}
+	else {
+		ok exception { $n->{def} = 456 };
+		is_deeply [sort keys %$n], [qw/ abc /];
+	}
+}
+{
+	h2o -class=>'Baz2', -new, -nolock, {}, qw/ abc /;
+	my $n = Baz2->new(abc=>123);
 	$n->{def} = 456;
 	is_deeply [sort keys %$n], [qw/ abc def /];
 }
