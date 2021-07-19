@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 186;
+use Test::More tests => 190;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -31,6 +31,9 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
 is $Util::H2O::VERSION, '0.12';
+
+diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
+	if $] lt '5.008009';
 
 my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
@@ -391,6 +394,20 @@ ok !grep { /redefined/i } warns {
 	h2o { abc => "def" }, qw/ abc /;
 	h2o {}, qw/ abc abc /;
 };
+
+SKIP: {
+	skip "Tests only for old Perls", 4 if $] ge '5.008009';
+	my @w = warns {
+		my $o1 = h2o {};
+		$o1->{bar} = 456;
+		is_deeply [%$o1], [ bar=>456 ];
+		my $o2 = h2o -ro, { foo=>123 };
+		$o2->{foo} = 456;
+		ok exception { $o2->foo(789) };
+		is_deeply [%$o2], [ foo=>456 ];
+	};
+	is grep({ /\btoo old\b/i } @w), 2;
+}
 
 ok exception { h2o() };
 ok exception { h2o("blah") };

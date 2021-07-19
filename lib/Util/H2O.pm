@@ -54,9 +54,8 @@ BEGIN {
 		require Hash::Util;
 		Hash::Util->import(qw/ lock_ref_keys lock_hashref /) }
 	else {
-		*lock_ref_keys = sub {};  # uncoverable statement
-		*lock_hashref = sub {
-			carp "this perl is too old to lock the hash";  # uncoverable statement
+		*lock_ref_keys = *lock_hashref = sub {
+			carp "this Perl is too old to lock the hash";  # uncoverable statement
 		};  # uncoverable statement
 	}
 }
@@ -156,6 +155,7 @@ Note that on really old Perls, that is, before Perl v5.8.9,
 L<Hash::Util> and its C<lock_ref_keys> are not available, so the hash
 is never locked on those versions of Perl. Versions of this module
 before v0.06 did not lock the keyset.
+Versions of this module as of v0.12 issue a warning on old Perls.
 
 =item C<-nolock>
 
