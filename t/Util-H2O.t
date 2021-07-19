@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 190;
+use Test::More tests => 191;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -126,6 +126,11 @@ my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 	$o->{y} = 333;
 	is_deeply $o, { x=>111, y=>333 };
 	is $o->y, 222;
+}
+{
+	my $h = { foo => 123, bar => sub {} };
+	h2o -meth, $h;
+	is_deeply $h, { foo => 123 };
 }
 
 # -class

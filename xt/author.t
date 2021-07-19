@@ -89,7 +89,7 @@ subtest 'code in POD' => sub { plan tests=>9;
 		ok eval('{'.<<"END_CODE".';1}'), 'synopsis runs' or diag explain $@; ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
 			use warnings; use strict;
 			$$verbatim[0];
-			is_deeply \$hash, { foo=>'bar', x=>'z', more=>'quz' }, 'synopsis \$hash';
+			is_deeply \$hash, { foo=>'bar', x=>'z', more=>'cowbell' }, 'synopsis \$hash';
 			is_deeply \$struct, { hello => { perl => "world!" } }, 'synopsis \$struct';
 			isa_ok \$one, 'Point';
 			is_deeply \$one, { x=>1, y=>2 }, 'synopsis \$one';
