@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 150;
+use Test::More tests => 186;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -298,6 +298,59 @@ sub checksym {
 	my $n = Baz2->new(abc=>123);
 	$n->{def} = 456;
 	is_deeply [sort keys %$n], [qw/ abc def /];
+}
+
+# -ro
+SKIP: {
+	skip "Won't work on old Perls", 36 if $] lt '5.008009';
+	my $o = h2o -ro, { foo=>123, bar=>undef };
+	is $o->foo, 123;
+	is $o->bar, undef;
+	ok exception { $o->foo(456) };
+	ok exception { $o->bar(789) };
+	ok exception { $o->{foo} = 456 };
+	ok exception { $o->{bar} = 789 };
+	ok exception { $o->{quz} = 111 };
+	is $o->foo, 123;
+	is $o->bar, undef;
+	is_deeply [sort keys %$o], [qw/ bar foo /];
+
+	my $or = h2o -ro, -recurse, { foo => { bar => 'quz' } };
+	ok exception { $or->foo(123) };
+	ok exception { $or->foo->bar(456) };
+	ok exception { $or->{foo} = 123 };
+	ok exception { $or->{foo}{bar} = 456 };
+	ok exception { $or->foo->{bar} = 456 };
+
+	my $on = h2o -ro, -new, {}, qw/foo bar/;
+	ok exception { $on->{foo} = 'x' };
+	ok exception { $on->{bar} = 'y' };
+	ok exception { $on->foo("x") };
+	is_deeply [%$on], [];
+	is $on->foo, undef;
+	is $on->bar, undef;
+	my $onn = $on->new(foo=>'quz');
+	isa_ok $onn, ref $on;
+	ok exception { $onn->{foo} = 'x' };
+	ok exception { $onn->{bar} = 'y' };
+	ok exception { $onn->foo("x") };
+	is_deeply [%$onn], [ foo=>'quz' ];
+	is $onn->foo, 'quz';
+	is $onn->bar, undef;
+
+	h2o -classify=>'ReadOnlyFoo', -ro, {
+			add => sub { $_[0]->x + $_[0]->y },
+		}, qw/ x y /;
+	my $x = ReadOnlyFoo->new(x=>123, y=>456);
+	is $x->add, 579;
+	ok exception { $x->x(111) };
+	ok exception { $x->y(222) };
+	ok exception { $x->{x}=111 };
+	ok exception { $x->{y}=222 };
+	is $x->add, 579;
+
+	ok exception { h2o -ro, { foo=>123 }, qw/ bar / };
+	ok exception { h2o -ro, -nolock, { foo=>123 } };
 }
 
 # plain AUTOLOAD

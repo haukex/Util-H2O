@@ -52,8 +52,13 @@ BEGIN {
 	# uncoverable condition false
 	if ( $] ge '5.008009' ) {
 		require Hash::Util;
-		Hash::Util->import('lock_ref_keys') }
-	else { *lock_ref_keys = sub {} }  # uncoverable statement
+		Hash::Util->import(qw/ lock_ref_keys lock_hashref /) }
+	else {
+		*lock_ref_keys = sub {};  # uncoverable statement
+		*lock_hashref = sub {
+			carp "this perl is too old to lock the hash";  # uncoverable statement
+		};  # uncoverable statement
+	}
 }
 
 =head1 Description
@@ -81,10 +86,10 @@ one will take effect.
 
 =item C<-recurse>
 
-Nested hashes are objectified as well.
-The only option that is passed down to nested hashes is C<-lock>.
-I<None> of the other options will be applied to the nested hashes, including
-C<@additional_keys>. Nested arrayrefs are not recursed into.
+Nested hashes are objectified as well. The only options that are passed down to
+nested hashes are C<-lock> and C<-ro>. I<None> of the other options will be
+applied to the nested hashes, including C<@additional_keys>. Nested arrayrefs
+are not recursed into.
 
 Versions of this module before v0.12 did not pass down the C<-lock> option,
 meaning that if you used C<-nolock, -recurse> on those versions, the nested
@@ -156,6 +161,21 @@ before v0.06 did not lock the keyset.
 
 Short form of the option C<< lock=>0 >>.
 
+=item C<-ro>
+
+Makes the entire hash read-only using L<Hash::Util>'s C<lock_hashref> and the
+generated accessors will also throw an error if you try to change values. In
+other words, this makes the object and the underlying hash immutable.
+
+You cannot specify any C<@additional_keys> with this option enabled unless you
+also use the C<-new> option - the additional keys will then only be useful as
+arguments to the constructor. This option can't be used with C<-nolock> or
+C<< lock=>0 >>.
+
+This option was added in v0.12. Using this option will not work and cause a
+warning when used on really old Perls (before v5.8.9), because this
+functionality was not yet available there.
+
 =back
 
 =head3 C<$hashref>
@@ -184,13 +204,14 @@ The (now blessed and optionally locked) C<$hashref>.
 =cut
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$meth,$class,$new,$clean,$lock);
+	my ($recurse,$meth,$class,$new,$clean,$lock,$ro);
 	while ( @_ && $_[0] && !ref$_[0] ) {
 		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
 		elsif ($_[0] eq '-meth' ) { $meth    = shift }
 		elsif ($_[0] eq '-clean') { $clean   = (shift, shift()?1:0) }
 		elsif ($_[0] eq '-lock' ) { $lock    = (shift, shift()?1:0) }
 		elsif ($_[0] eq '-nolock'){ $lock = 0; shift }
+		elsif ($_[0] eq '-ro'   ) { $ro      = shift }
 		elsif ($_[0] eq '-new'  ) { $new     = shift }
 		elsif ($_[0] eq '-class') {
 			$class = (shift, shift);
@@ -209,16 +230,20 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	$lock = 1 unless defined $lock;
 	my $hash = shift;
 	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH';
+	croak "h2o with additional keys doesn't make sense with -ro" if $ro && @_ && !$new;
 	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;
 	croak "h2o hashref may not contain a key named DESTROY"
 		if $clean && exists $keys{DESTROY};
 	croak "h2o hashref may not contain a key named new if you use the -new option"
 		if $new && exists $keys{new};
-	if ($recurse) { ref eq 'HASH' and h2o(-recurse,-lock=>$lock,$_) for values %$hash }
+	croak "h2o can't turn off -lock if -ro is on" if $ro && !$lock;
+	if ($recurse) { ref eq 'HASH' and h2o(-recurse,-lock=>$lock,($ro?-ro:()),$_) for values %$hash }
 	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
 	for my $k (keys %keys) {
-		my $sub = sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
+		my $sub = $ro
+			? sub { my $self = shift; croak "this object is read-only" if @_; exists $self->{$k} ? $self->{$k} : undef }
+			: sub { my $self = shift; $self->{$k} = shift if @_; $self->{$k} };
 		if ( $meth && ref $$hash{$k} eq 'CODE' )
 			{ $sub = delete $$hash{$k}; $ak{$k} or delete $keys{$k} }
 		{ no strict 'refs'; *{"${pack}::$k"} = $sub }  ## no critic (ProhibitNoStrict)
@@ -235,13 +260,15 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 			my $self = {@_};
 			exists $keys{$_} or croak "Unknown argument '$_'" for keys %$self;
 			bless $self, $class;
-			lock_ref_keys $self, keys %keys if $lock;
+			if ($ro) { lock_hashref $self }
+			elsif ($lock) { lock_ref_keys $self, keys %keys }
 			return $self;
 		};
 		{ no strict 'refs'; *{$pack.'::new'} = $sub }  ## no critic (ProhibitNoStrict)
 	}
 	bless $hash, $pack;
-	lock_ref_keys $hash, keys %keys if $lock;
+	if ($ro) { lock_hashref $hash }
+	elsif ($lock) { lock_ref_keys $hash, keys %keys }
 	return $hash;
 }
 

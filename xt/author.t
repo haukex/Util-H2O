@@ -79,7 +79,8 @@ diag "### TO","DOs ###" if @tasks;
 diag "$$_[0]:$$_[1]: $$_[2]" for @tasks;
 diag "### ###" if @tasks;
 
-diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html";
+diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html\n"
+	. "rm -rf cover_db && make distclean && git clean -dxn";
 
 subtest 'code in POD' => sub { plan tests=>9;
 	my $verbatim = getverbatim($PERLFILES[0], qr/\b(?:synopsis)\b/i);
