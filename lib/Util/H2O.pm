@@ -40,7 +40,7 @@ Util::H2O - Hash to Object: turns hashrefs into objects with accessors for keys
 
 =cut
 
-our $VERSION = '0.12';
+our $VERSION = '0.14';
 # For AUTHOR, COPYRIGHT, AND LICENSE see the bottom of this file
 
 our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
