@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 203;
+use Test::More tests => 218;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -361,6 +361,37 @@ SKIP: {
 	ok exception { h2o -ro, -nolock, { foo=>123 } };
 }
 
+# -destroy
+{
+	my $dest=0;
+	my $o1 = h2o -destroy=>sub{$dest++}, {};
+	is $dest, 0;
+	$o1=undef;
+	is $dest, 1;
+	my $o2 = h2o -new, -destroy=>sub{$dest++}, {};
+	is $dest, 1;
+	$o2->new;
+	is $dest, 2;
+	h2o -classify=>'DestTest', -destroy=>sub{
+			isa_ok shift, 'DestTest'; $dest++;
+		}, {}; # note this object is immediately DESTROYed
+	is $dest, 3;
+	my $o3 = DestTest->new();
+	is $dest, 3;
+	$o3=undef;
+	is $dest, 4;
+	
+	is grep({/foobar/} warns {
+		my $exp;
+		my $od = h2o -destroy=>sub {
+			is ref $_[0], $exp or diag explain $_[0];
+			die "foobar" }, {};  ## no critic (RequireCarping)
+		$exp = ref $od;
+		$od = undef;
+	}), 1;
+
+}
+
 # DESTROY
 {
 	ok h2o -class=>'DestroyTest1', -meth, { DESTROY=>sub{} };
@@ -369,9 +400,11 @@ SKIP: {
 	ok exception { h2o -class=>'DestroyTest3', -meth, { DESTROY=>'' } };
 	ok exception { h2o -class=>'DestroyTest4', -meth, { DESTROY=>undef } };
 	ok exception { h2o -class=>'DestroyTest5', { DESTROY=>sub{} } };
+	ok exception { h2o -class=>'DestroyTest6', -meth, destroy=>sub{}, { DESTROY=>sub{} } };
 	ok exception { h2o -clean=>0, -meth, { DESTROY=>'' } };
 	ok exception { h2o -clean=>0, -meth, { DESTROY=>undef } };
 	ok exception { h2o -clean=>0, { DESTROY=>sub{} } };
+	ok exception { h2o -clean=>0, -meth, -destroy=>sub{}, { DESTROY=>sub{} } };
 	ok exception { h2o -meth, { DESTROY=>sub{} } };
 	ok exception { h2o { DESTROY=>sub{} } };
 	ok exception { h2o { DESTROY=>undef } };
@@ -444,5 +477,7 @@ ok exception { h2o(-class=>[]) };
 ok exception { h2o(-classify) };
 ok exception { h2o(-classify=>'') };
 ok exception { h2o(-classify=>[]) };
+ok exception { h2o(-destroy=>'') };
+ok exception { h2o(-destroy=>undef) };
 
 done_testing;

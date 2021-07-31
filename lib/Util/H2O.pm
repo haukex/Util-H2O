@@ -134,6 +134,13 @@ features, like required arguments, validation, or other
 initialization, you should probably switch to something like L<Moo>
 instead.
 
+=item C<< -destroy => I<coderef> >>
+
+Allows you to specify a custom destructor. This coderef will be called from the
+object's actual C<DESTROY> in void context with the first argument being the
+same as the first argument to the C<DESTROY> method. Errors will be converted
+to warnings.
+
 =item C<< -clean => I<bool> >>
 
 Whether or not to clean up the generated package when the object is
@@ -209,6 +216,10 @@ This key is not allowed except if all of the following apply:
 
 =item *
 
+C<-destroy> is not used,
+
+=item *
+
 C<-clean> is off (which happens by default when you use C<-class>),
 
 =item *
@@ -248,7 +259,7 @@ The (now blessed and optionally locked) C<$hashref>.
 =cut
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$meth,$class,$new,$clean,$lock,$ro);
+	my ($recurse,$meth,$class,$destroy,$new,$clean,$lock,$ro);
 	while ( @_ && $_[0] && !ref$_[0] ) {
 		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
 		elsif ($_[0] eq '-meth' ) { $meth    = shift }
@@ -268,6 +279,10 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 				if !defined $class || ref $class || !length $class;
 			$meth = 1; $new = 1;
 		}
+		elsif ($_[0] eq '-destroy') {
+			$destroy = (shift, shift);
+			croak "invalid -destroy option value" unless ref $destroy eq 'CODE';
+		}
 		else { croak "unknown option to h2o: '$_[0]'" }
 	}
 	$clean = !defined $class unless defined $clean;
@@ -278,7 +293,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;
 	croak "h2o hashref may not contain a key named DESTROY"
-		if exists $keys{DESTROY} && ( $clean || !$meth || ref $hash->{DESTROY} ne 'CODE' );
+		if exists $keys{DESTROY} && ( $destroy || $clean || !$meth || ref $hash->{DESTROY} ne 'CODE' );
 	croak "h2o hashref may not contain a key named new if you use the -new option"
 		if $new && exists $keys{new};
 	croak "h2o can't turn off -lock if -ro is on" if $ro && !$lock;
@@ -292,8 +307,10 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 			{ $sub = delete $$hash{$k}; $ak{$k} or delete $keys{$k} }
 		{ no strict 'refs'; *{"${pack}::$k"} = $sub }  ## no critic (ProhibitNoStrict)
 	}
-	if ( $clean ) {
-		my $sub = sub { delete_package($pack) };
+	if ( $destroy || $clean ) {
+		my $sub = sub {
+			$destroy and ( eval { $destroy->($_[0]); 1 } or carp $@ );  ## no critic (ProhibitMixedBooleanOperators)
+			$clean and delete_package($pack) };
 		{ no strict 'refs'; *{$pack.'::DESTROY'} = $sub }  ## no critic (ProhibitNoStrict)
 	}
 	if ( $new ) {
