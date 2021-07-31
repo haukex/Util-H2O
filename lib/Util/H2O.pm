@@ -203,8 +203,23 @@ This key is not allowed in the hash if the C<-new> option is on.
 
 =item C<DESTROY>
 
-This key is not allowed in the hash when C<-clean> is on, which is the default
-unless you use C<-class>.
+This key is not allowed except if all of the following apply:
+
+=over
+
+=item *
+
+C<-clean> is off (which happens by default when you use C<-class>),
+
+=item *
+
+C<-meth> is on, and
+
+=item *
+
+the value of the key C<DESTROY> is a coderef.
+
+=back
 
 =item C<AUTOLOAD>
 
@@ -263,7 +278,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;
 	croak "h2o hashref may not contain a key named DESTROY"
-		if $clean && exists $keys{DESTROY};
+		if exists $keys{DESTROY} && ( $clean || !$meth || ref $hash->{DESTROY} ne 'CODE' );
 	croak "h2o hashref may not contain a key named new if you use the -new option"
 		if $new && exists $keys{new};
 	croak "h2o can't turn off -lock if -ro is on" if $ro && !$lock;

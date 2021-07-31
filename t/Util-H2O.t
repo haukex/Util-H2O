@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 191;
+use Test::More tests => 203;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -359,6 +359,22 @@ SKIP: {
 
 	ok exception { h2o -ro, { foo=>123 }, qw/ bar / };
 	ok exception { h2o -ro, -nolock, { foo=>123 } };
+}
+
+# DESTROY
+{
+	ok h2o -class=>'DestroyTest1', -meth, { DESTROY=>sub{} };
+	ok h2o -clean=>0, -meth, { DESTROY=>sub{} };
+	ok exception { h2o -class=>'DestroyTest2', -clean=>1, -meth, { DESTROY=>sub{} } };
+	ok exception { h2o -class=>'DestroyTest3', -meth, { DESTROY=>'' } };
+	ok exception { h2o -class=>'DestroyTest4', -meth, { DESTROY=>undef } };
+	ok exception { h2o -class=>'DestroyTest5', { DESTROY=>sub{} } };
+	ok exception { h2o -clean=>0, -meth, { DESTROY=>'' } };
+	ok exception { h2o -clean=>0, -meth, { DESTROY=>undef } };
+	ok exception { h2o -clean=>0, { DESTROY=>sub{} } };
+	ok exception { h2o -meth, { DESTROY=>sub{} } };
+	ok exception { h2o { DESTROY=>sub{} } };
+	ok exception { h2o { DESTROY=>undef } };
 }
 
 # plain AUTOLOAD
