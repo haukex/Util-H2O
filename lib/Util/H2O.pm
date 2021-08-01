@@ -129,6 +129,7 @@ Short form of the options C<< -new, -meth, -class => I<classname> >>.
 
 Convenience option to set the L<C<@ISA>|perlvar/"@ISA"> variable in the package
 of the object, so that the object inherits from that/those package(s).
+This option was added in v0.14.
 
 =item C<-new>
 
@@ -145,6 +146,7 @@ Allows you to specify a custom destructor. This coderef will be called from the
 object's actual C<DESTROY> in void context with the first argument being the
 same as the first argument to the C<DESTROY> method. Errors will be converted
 to warnings.
+This option was added in v0.14.
 
 =item C<< -clean => I<bool> >>
 
@@ -236,6 +238,9 @@ C<-meth> is on, and
 the value of the key C<DESTROY> is a coderef.
 
 =back
+
+Versions of this module before v0.14 allowed a C<DESTROY> key in more
+circumstances (whenever C<-clean> was off).
 
 =item C<AUTOLOAD>
 
