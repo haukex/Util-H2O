@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 218;
+use Test::More tests => 234;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -150,6 +150,48 @@ my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 	is $o7a->ijk, undef;
 	is $o7a->rst, 'efg';
 	is $o7a->ijk, 'wxy';
+}
+
+# -isa
+{
+	sub get_isa {
+		my $x = shift;
+		$x = ref $x if ref $x;
+		no strict 'refs';  ## no critic (ProhibitNoStrict)
+		return \@{$x.'::ISA'};
+	}
+	{ package IsaTest2;  ## no critic (ProhibitMultiplePackages)
+		sub foo { return "foo" }
+	}
+	{ package IsaTest3;  ## no critic (ProhibitMultiplePackages)
+		use parent -norequire, 'IsaTest2';
+		sub bar { return "bar" }
+	}
+	{ package IsaTest5;  ## no critic (ProhibitMultiplePackages)
+		sub quz { return "quz" }
+	}
+	my $o1 = h2o {};
+	is_deeply get_isa($o1), [];
+	h2o -class=>'IsaTest1', {};
+	is_deeply \@IsaTest1::ISA, [];
+	my $o2 = h2o -isa=>'IsaTest2', {};
+	is_deeply get_isa($o2), ['IsaTest2'];
+	isa_ok $o2, 'IsaTest2';
+	ok $o2->can("foo");
+	is $o2->foo, "foo";
+	h2o -classify=>'IsaTest4', -isa=>'IsaTest3', {
+		foo => sub { "Foo!" } };
+	my $o3 = IsaTest4->new();
+	isa_ok $o3, 'IsaTest4';
+	isa_ok $o3, 'IsaTest3';
+	isa_ok $o3, 'IsaTest2';
+	is_deeply \@IsaTest4::ISA, ['IsaTest3'];
+	is $o3->bar, "bar";
+	is $o3->foo, "Foo!";
+	my $o4 = h2o -isa=>['IsaTest5','IsaTest3'], {};
+	ok $o4->can("foo");
+	ok $o4->can("bar");
+	ok $o4->can("quz");
 }
 
 # -clean
@@ -479,5 +521,6 @@ ok exception { h2o(-classify=>'') };
 ok exception { h2o(-classify=>[]) };
 ok exception { h2o(-destroy=>'') };
 ok exception { h2o(-destroy=>undef) };
+ok exception { h2o(-isa=>{}) };
 
 done_testing;

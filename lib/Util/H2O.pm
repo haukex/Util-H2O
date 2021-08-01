@@ -125,6 +125,11 @@ C<-new>.
 
 Short form of the options C<< -new, -meth, -class => I<classname> >>.
 
+=item C<< -isa => I<arrayref or scalar> >>
+
+Convenience option to set the L<C<@ISA>|perlvar/"@ISA"> variable in the package
+of the object, so that the object inherits from that/those package(s).
+
 =item C<-new>
 
 Generates a constructor named C<new> in the package. The constructor
@@ -259,7 +264,7 @@ The (now blessed and optionally locked) C<$hashref>.
 =cut
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$meth,$class,$destroy,$new,$clean,$lock,$ro);
+	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro);
 	while ( @_ && $_[0] && !ref$_[0] ) {
 		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
 		elsif ($_[0] eq '-meth' ) { $meth    = shift }
@@ -278,6 +283,11 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 			croak "invalid -classify option value"
 				if !defined $class || ref $class || !length $class;
 			$meth = 1; $new = 1;
+		}
+		elsif ($_[0] eq '-isa') {
+			$isa = (shift, shift);
+			croak "invalid -isa option value" if !( ref($isa) eq 'ARRAY' || !ref($isa) );
+			$isa = [$isa] unless ref $isa;
 		}
 		elsif ($_[0] eq '-destroy') {
 			$destroy = (shift, shift);
@@ -327,6 +337,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		};
 		{ no strict 'refs'; *{$pack.'::new'} = $sub }  ## no critic (ProhibitNoStrict)
 	}
+	if ($isa) { no strict 'refs'; @{$pack.'::ISA'} = @$isa }  ## no critic (ProhibitNoStrict)
 	bless $hash, $pack;
 	if ($ro) { lock_hashref $hash }
 	elsif ($lock) { lock_ref_keys $hash, keys %keys }
