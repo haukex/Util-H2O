@@ -164,7 +164,7 @@ my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 		sub foo { return "foo" }
 	}
 	{ package IsaTest3;  ## no critic (ProhibitMultiplePackages)
-		use parent -norequire, 'IsaTest2';
+		our @ISA = ('IsaTest2');  ## no critic (ProhibitExplicitISA)
 		sub bar { return "bar" }
 	}
 	{ package IsaTest5;  ## no critic (ProhibitMultiplePackages)
@@ -423,14 +423,17 @@ SKIP: {
 	$o3=undef;
 	is $dest, 4;
 	
+	# For a reason I can't explain yet, Perls before 5.26 don't capture the warning here.
+	# perlbrew exec perl -e 'sub Foo::DESTROY{warn"x"}my$x=bless{},"Foo";local$SIG{__WARN__}=sub{print"<<".shift().">>"};$x=undef'
+	# Both the "local" and the "$x=undef" appear to be significant in the above.
 	is grep({/foobar/} warns {
 		my $exp;
 		my $od = h2o -destroy=>sub {
 			is ref $_[0], $exp or diag explain $_[0];
-			die "foobar" }, {};  ## no critic (RequireCarping)
+			die "this warning is expected: foobar" }, {};  ## no critic (RequireCarping)
 		$exp = ref $od;
 		$od = undef;
-	}), 1;
+	}), $] ge '5.026' ? 1 : 0; # Possible To-Do for Later: I'm not too happy with this
 
 }
 
