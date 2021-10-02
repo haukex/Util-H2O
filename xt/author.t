@@ -84,13 +84,14 @@ diag "### ###" if @tasks;
 diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html\n"
 	. "rm -rf cover_db && make distclean && git clean -dxn";
 
-subtest 'synopsis code' => sub { plan tests=>9;
+subtest 'synopsis code' => sub { plan tests=>8;
 	my $verbatim = getverbatim($PERLFILES[0], qr/\b(?:synopsis)\b/i);
 	is @$verbatim, 1, 'verbatim block count' or diag explain $verbatim;
 	is capture_merged {
-		ok eval('{'.<<"END_CODE".';1}'), 'synopsis runs' or diag explain $@; ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+		my $code = <<"END_CODE"; eval "{$code\n;1}" or die $@; ## no critic (ProhibitStringyEval, RequireCarping)
 			use warnings; use strict;
-			$$verbatim[0];
+			$$verbatim[0]
+			;
 			is_deeply \$hash, { foo=>'bar', x=>'z', more=>'cowbell' }, 'synopsis \$hash';
 			is_deeply \$struct, { hello => { perl => "world!" } }, 'synopsis \$struct';
 			isa_ok \$one, 'Point';
@@ -101,23 +102,44 @@ END_CODE
 	}, "bar\nworld!\nbeans\n0.927\n", 'output of synopsis correct';
 };
 
-subtest 'cookbook code' => sub { plan tests=>11;
-	my $code = getverbatim($PERLFILES[0], qr/\b(?:cookbook)\b/i);
-	is @$code, 4, 'verbatim block count';
-	my ($c_db1,$c_db2,$c_up1,$c_up2) = @$code;
+subtest 'cookbook code' => sub { plan tests=>16;
+	my $codes = getverbatim($PERLFILES[0], qr/\b(?:cookbook)\b/i);
+	is @$codes, 5, 'verbatim block count';
+	my ($c_cfg,$c_db1,$c_db2,$c_up1,$c_up2) = @$codes;
+	# Config::Tiny
+	is capture_merged {
+		my ($tfh, $config_filename) = tempfile(UNLINK=>1);
+		print $tfh "[foo]\nbar=quz\n";
+		close $tfh;
+		my $code2 = <<"END CODE"; eval "{$code2\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
+			use warnings; use strict;
+			use feature 'say';
+			use Config::Tiny 2.27;
+			$c_cfg
+END CODE
+		open my $fh, '<', $config_filename or die $!;  ## no critic (RequireCarping)
+		my $cfg = do { local $/=undef; <$fh> };
+		close $fh;
+		is $cfg, "[foo]\nbar=Hello, World!\n", 'config file correct';
+	}, "quz\n", 'config output correct';
+	# test statement in docs about nested hashes
+	my $config = Config::Tiny->new({%{ Util::H2O::h2o( -recurse, { hello => { world => "xyz" }} ) }});
+	isa_ok $config, 'Config::Tiny';
+	like ref($config->{hello}), $Util::H2O::_PACKAGE_REGEX, 'nested hash as expected';  ## no critic (ProtectPrivateVars)
+	is $config->{hello}->world, "xyz", 'call method in nested hash';
 	# Debugging
 	( my $exp1 = "$c_db2\n" ) =~ s/^\ {8}//mg;
 	is capture_merged {
-		eval "use warnings; use strict; $c_db1";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+		eval "{ use warnings; use strict; $c_db1\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
 	}, $exp1, 'debugging output correct';
 	# Upgrading to Moo
 	is capture_merged {
-		eval "use warnings; use strict; $c_up1";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+		eval "{ use warnings; use strict; $c_up1\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
 	}, "", 'upgrading output 1 empty';
 	my $x = new_ok "My::Class", [ foo=>"bar", details => new_ok "My::Class::Details", [ a=>123, b=>456 ] ];
 	is_deeply $x, { foo=>"bar", details=>{a=>123,b=>456} }, 'data structure 1 is correct';
 	is capture_merged {
-		eval "use warnings; use strict; $c_up2";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+		eval "{ use warnings; use strict; $c_up2\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
 	}, "", 'upgrading output 2 empty';
 	my $y = new_ok "My::Class2", [ foo=>"bar", details => new_ok "My::Class2::Details", [ a=>123, b=>456 ] ];
 	is_deeply $y, { foo=>"bar", details=>{a=>123,b=>456} }, 'data structure 2 is correct';
