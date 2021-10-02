@@ -33,7 +33,7 @@ BEGIN {
 	);
 }
 
-use Test::More tests => 3*@PERLFILES + 2;
+use Test::More tests => 3*@PERLFILES + 3;
 note explain \@PERLFILES;
 
 use File::Temp qw/tempfile/;
@@ -59,6 +59,8 @@ use Test::DistManifest;
 use Pod::Simple::SimpleTree;
 use Capture::Tiny qw/capture_merged/;
 
+sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
+
 subtest 'MANIFEST' => sub { manifest_ok() };
 
 pod_file_ok($_) for @PERLFILES;
@@ -82,7 +84,7 @@ diag "### ###" if @tasks;
 diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html\n"
 	. "rm -rf cover_db && make distclean && git clean -dxn";
 
-subtest 'code in POD' => sub { plan tests=>9;
+subtest 'synopsis code' => sub { plan tests=>9;
 	my $verbatim = getverbatim($PERLFILES[0], qr/\b(?:synopsis)\b/i);
 	is @$verbatim, 1, 'verbatim block count' or diag explain $verbatim;
 	is capture_merged {
@@ -97,6 +99,29 @@ subtest 'code in POD' => sub { plan tests=>9;
 			is_deeply \$two, { x=>3, y=>4 }, 'synopsis \$two';
 END_CODE
 	}, "bar\nworld!\nbeans\n0.927\n", 'output of synopsis correct';
+};
+
+subtest 'cookbook code' => sub { plan tests=>11;
+	my $code = getverbatim($PERLFILES[0], qr/\b(?:cookbook)\b/i);
+	is @$code, 4, 'verbatim block count';
+	my ($c_db1,$c_db2,$c_up1,$c_up2) = @$code;
+	# Debugging
+	( my $exp1 = "$c_db2\n" ) =~ s/^\ {8}//mg;
+	is capture_merged {
+		eval "use warnings; use strict; $c_db1";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+	}, $exp1, 'debugging output correct';
+	# Upgrading to Moo
+	is capture_merged {
+		eval "use warnings; use strict; $c_up1";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+	}, "", 'upgrading output 1 empty';
+	my $x = new_ok "My::Class", [ foo=>"bar", details => new_ok "My::Class::Details", [ a=>123, b=>456 ] ];
+	is_deeply $x, { foo=>"bar", details=>{a=>123,b=>456} }, 'data structure 1 is correct';
+	is capture_merged {
+		eval "use warnings; use strict; $c_up2";  ## no critic (ProhibitStringyEval, RequireCheckingReturnValueOfEval)
+	}, "", 'upgrading output 2 empty';
+	my $y = new_ok "My::Class2", [ foo=>"bar", details => new_ok "My::Class2::Details", [ a=>123, b=>456 ] ];
+	is_deeply $y, { foo=>"bar", details=>{a=>123,b=>456} }, 'data structure 2 is correct';
+	ok exception { My::Class2->new( foo=>"bar", details=>My::Class::Details->new(a=>444,b=>555) ) }, 'type checking works';
 };
 
 sub getverbatim {
