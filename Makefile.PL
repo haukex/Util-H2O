@@ -37,10 +37,10 @@ WriteMakefile(
 		( $] ge '5.008009' ? (
 		    'Hash::Util'         => '0.06',
 		):()),
+		'Scalar::Util'           => '1.02',
 	},
 	TEST_REQUIRES => {
 		'Test::More'             => '1.302096',
-		'Scalar::Util'           => 0,
 	},
 );
 sub MY::postamble {

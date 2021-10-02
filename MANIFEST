@@ -6,4 +6,5 @@ MANIFEST			This list of files
 README.md
 t/Util-H2O.t
 xt/author.t
+xt/config_tiny.t
 xt/mem.t

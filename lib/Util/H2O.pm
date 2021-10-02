@@ -5,6 +5,7 @@ use strict;
 use Exporter 'import';
 use Carp;
 use Symbol qw/delete_package/;
+use Scalar::Util qw/blessed reftype/;
 
 =head1 Name
 
@@ -190,12 +191,35 @@ This option was added in v0.12. Using this option will not work and cause a
 warning when used on really old Perls (before v5.8.9), because this
 functionality was not yet available there.
 
+=item C<-force>
+
+Supplying this option means that this function will also accept already blessed
+hashrefs, which will then be re-C<bless>ed. However, you cannot re-bless
+objects created by this module. *Note* that reblessing an object like this will
+cause the original destructor(s) to not be called, which may not be what you
+want! This option was added in v0.16.
+
+=for comment
+	the following is tested in xt/config_tiny.t
+
+For example, you can convert a L<Config::Tiny> object via
+C<< h2o -force, -recurse, -nolock, $config; >> so you can access configuration
+options via methods. As of L<Config::Tiny> v2.27, you could even convert the
+object back to a L<Config::Tiny> object, for example if you wanted to write it
+back out, via C<< $config = Config::Tiny->new($config); >>. In both cases, the
+object will not be copied, only reblessed, B<however>, for the second
+conversion, be aware that the temporary package will not be deleted, so you may
+want to do C<< $config = Config::Tiny->new({%$config}); >> instead. Note the
+C<-nolock> in the first example is only needed for this second conversion.
+
 =back
 
 =head3 C<$hashref>
 
-You must supply a plain (unblessed) hash reference here. Be aware
-that this function I<does> modify the original hashref(s) by blessing
+You must supply a plain (unblessed) hash reference here, unless you use the
+L<C<-force>|/"-force"> option.
+
+Be aware that this function I<does> modify the original hashref(s) by blessing
 it and locking its keyset (the latter can be disabled with the
 C<-lock> option), and if you use C<-meth> or C<-classify>, keys whose
 values are code references will be removed.
@@ -271,7 +295,7 @@ The (now blessed and optionally locked) C<$hashref>.
 our $_PACKAGE_REGEX = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro);
+	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro,$force);
 	while ( @_ && $_[0] && !ref$_[0] ) {
 		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
 		elsif ($_[0] eq '-meth' ) { $meth    = shift }
@@ -280,6 +304,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		elsif ($_[0] eq '-nolock'){ $lock = 0; shift }
 		elsif ($_[0] eq '-ro'   ) { $ro      = shift }
 		elsif ($_[0] eq '-new'  ) { $new     = shift }
+		elsif ($_[0] eq '-force') { $force   = shift }
 		elsif ($_[0] eq '-class') {
 			$class = (shift, shift);
 			croak "invalid -class option value"
@@ -305,7 +330,8 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	$clean = !defined $class unless defined $clean;
 	$lock = 1 unless defined $lock;
 	my $hash = shift;
-	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH';
+	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH'  ## no critic (ProhibitNegativeExpressionsInUnlessAndUntilConditions)
+		|| $force && blessed($hash) && reftype($hash) eq 'HASH' && blessed($hash) !~ $_PACKAGE_REGEX;
 	croak "h2o with additional keys doesn't make sense with -ro" if $ro && @_ && !$new;
 	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;

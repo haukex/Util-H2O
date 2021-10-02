@@ -1,6 +1,7 @@
 Revision history for Perl extension Util::H2O.
 
 0.16	not yet released
+	- added the "force" option
 	- ...
 
 0.14	Mon, Aug  2 2021

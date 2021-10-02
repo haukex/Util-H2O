@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 234;
+use Test::More tests => 248;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -92,6 +92,32 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	$o2->foo->{def} = 456;
 	is_deeply [sort keys %$o2], [qw/ abc foo /];
 	is_deeply [sort keys %{$o2->foo}], [qw/ bar def /];
+}
+
+# -force
+{
+	ok exception { h2o bless {}, "SomeClass" };
+	ok exception { h2o bless [], "SomeClass" };
+	ok exception { h2o -force, bless [], "SomeClass" };
+	ok exception { h2o -force, [] };
+	my $o = h2o -nolock, { foo => "bar" };
+	ok exception { h2o $o };
+	ok exception { h2o -force, $o };
+	my $o2 = h2o {%$o};
+	is $o2->foo, "bar";
+	my @w = warns { h2o -force, bless $o, "SomeClass" }; # shenanigans
+	is grep({/redefined/i} @w), 2; # "foo" and "DESTROY"
+	is $o->foo, "bar";
+	ok $o2 != $o;
+
+	# perl -wMstrict -MConfig::Tiny -MData::Dump -e 'dd+Config::Tiny->read_string("hello=world\n[foo]\nbar=quz\ntesting=123")'
+	my $ct = bless({ _ => { hello => "world" }, foo => { bar => "quz", testing => 123 } }, "Config::Tiny");
+	ok exception { h2o -recurse, $ct };
+	h2o -force, -recurse, $ct;
+	like blessed($ct), $PACKRE;
+	is $ct->_->hello, "world";
+	like blessed($ct->foo), $PACKRE;
+	is $ct->foo->bar, "quz";
 }
 
 # -meth
@@ -513,7 +539,6 @@ ok exception { h2o("blah") };
 ok exception { h2o(undef) };
 ok exception { h2o([]) };
 ok exception { h2o(-meth,-recurse) };
-ok exception { h2o(bless {}, "SomeClass") };
 ok exception { h2o({DESTROY=>'foo'}) };
 ok exception { h2o(-new, { new=>5 }) };
 ok exception { h2o(-class) };
