@@ -3,3 +3,4 @@
 ^MANIFEST\.
 (^|/)\.git
 ^\.(travis|appveyor)\.yml$
+(^|/)\..*\.swp$

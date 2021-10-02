@@ -30,12 +30,12 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.14';
+is $Util::H2O::VERSION, '0.16';
 
 diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
 	if $] lt '5.008009';
 
-my $PACKRE = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
+my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 
 {
 	my $hash = { foo => "bar", x => "y" };
@@ -525,5 +525,8 @@ ok exception { h2o(-classify=>[]) };
 ok exception { h2o(-destroy=>'') };
 ok exception { h2o(-destroy=>undef) };
 ok exception { h2o(-isa=>{}) };
+
+diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
+	if $] lt '5.008009';
 
 done_testing;

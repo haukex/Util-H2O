@@ -40,7 +40,7 @@ Util::H2O - Hash to Object: turns hashrefs into objects with accessors for keys
 
 =cut
 
-our $VERSION = '0.14';
+our $VERSION = '0.16';
 # For AUTHOR, COPYRIGHT, AND LICENSE see the bottom of this file
 
 our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
@@ -267,6 +267,8 @@ Please see the list of keys that are treated specially above.
 The (now blessed and optionally locked) C<$hashref>.
 
 =cut
+
+our $_PACKAGE_REGEX = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro);
