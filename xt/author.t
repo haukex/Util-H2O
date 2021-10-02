@@ -33,7 +33,8 @@ BEGIN {
 	);
 }
 
-use Test::More tests => 3*@PERLFILES + 3;
+use Test::More tests => 3*@PERLFILES + 6;
+BEGIN { use_ok 'Util::H2O' }
 note explain \@PERLFILES;
 
 use File::Temp qw/tempfile/;
@@ -60,6 +61,7 @@ use Pod::Simple::SimpleTree;
 use Capture::Tiny qw/capture_merged/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
+sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->() } @w }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn)
 
 subtest 'MANIFEST' => sub { manifest_ok() };
 
@@ -76,13 +78,40 @@ for my $file (@PERLFILES) {
 	}
 	close $fh;
 }
-diag "To-","Do Report: ", 0+@tasks, " To-","Dos found";
-diag "### TO","DOs ###" if @tasks;
-diag "$$_[0]:$$_[1]: $$_[2]" for @tasks;
-diag "### ###" if @tasks;
 
-diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html\n"
-	. "rm -rf cover_db && make distclean && git clean -dxn";
+subtest 'namespace::clean' => sub { plan tests=>4;
+	# This is just a copy of the test from the main tests with namespace::clean added in.
+	{
+		package Yet::Another;  ## no critic (ProhibitMultiplePackages)
+		use Util::H2O;
+		use namespace::clean;
+		h2o -classify, { hello=>sub{"World!"} }, qw/abc/;
+		sub test { return "<".shift->abc.">" }
+	}
+	my $o = new_ok 'Yet::Another', [ abc=>"def" ];
+	is $o->hello, "World!", 'getter';
+	is $o->test, "<def>", 'method';
+	ok !exists &Yet::Another::h2o, 'cleaned';
+};
+
+subtest 'destroy errors' => sub { plan tests=>2;
+	# Possible To-Do for Later: For a reason I can't explain yet, the warning from the destructor is not always captured by the signal handler here.
+	# Strangely, this same test changed its behavior in this current commit (-classify=>{...}) when in the main test file,
+	# but when I moved the test into this test file, it changed its behavior again. This feels really buggy!
+	# perlbrew exec perl -e 'sub Foo::DESTROY{warn"x"}my$x=bless{},"Foo";local$SIG{__WARN__}=sub{print"<<".shift().">>"};$x=undef'
+	# Both the "local" and the "$x=undef" appear to be significant in the above.
+	# So for now, I have moved this test to the author tests so I can use Capture::Tiny.
+	#is grep({/foobar/} warns {
+	like capture_merged {
+		my $exp;
+		my $od = h2o -destroy=>sub {
+			is ref $_[0], $exp, 'destructor called as expected' or diag explain $_[0];
+			die "this warning is expected: foobar" }, {};  ## no critic (RequireCarping)
+		$exp = ref $od;
+		$od = undef;
+	#}), 0, 'warning from constructor was not captured by __WARN__';
+	}, qr/^this warning is expected: foobar at .+/s, 'destructor error becomes warning';
+};
 
 subtest 'synopsis code' => sub { plan tests=>8;
 	my $verbatim = getverbatim($PERLFILES[0], qr/\b(?:synopsis)\b/i);
@@ -123,7 +152,7 @@ END CODE
 		is $cfg, "[foo]\nbar=Hello, World!\n", 'config file correct';
 	}, "quz\n", 'config output correct';
 	# test statement in docs about nested hashes
-	my $config = Config::Tiny->new({%{ Util::H2O::h2o( -recurse, { hello => { world => "xyz" }} ) }});
+	my $config = Config::Tiny->new({%{ h2o -recurse, { hello => { world => "xyz" }} }});
 	isa_ok $config, 'Config::Tiny';
 	like ref($config->{hello}), $Util::H2O::_PACKAGE_REGEX, 'nested hash as expected';  ## no critic (ProtectPrivateVars)
 	is $config->{hello}->world, "xyz", 'call method in nested hash';
@@ -145,6 +174,13 @@ END CODE
 	is_deeply $y, { foo=>"bar", details=>{a=>123,b=>456} }, 'data structure 2 is correct';
 	ok exception { My::Class2->new( foo=>"bar", details=>My::Class::Details->new(a=>444,b=>555) ) }, 'type checking works';
 };
+
+diag "To-","Do Report: ", 0+@tasks, " To-","Dos found";
+diag "### TO","DOs ###" if @tasks;
+diag "$$_[0]:$$_[1]: $$_[2]" for @tasks;
+diag "### ###" if @tasks;
+diag "To run coverage tests:\nperl Makefile.PL && make authorcover && firefox cover_db/coverage.html\n"
+	. "rm -rf cover_db && make distclean && git clean -dxn";
 
 sub getverbatim {
 	my ($file,$regex) = @_;

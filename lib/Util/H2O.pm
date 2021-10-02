@@ -121,9 +121,31 @@ name, you will get "redefined" warnings. Therefore, if you want to
 create multiple objects in the same package, you should probably use
 C<-new>.
 
-=item C<< -classify => I<classname> >>
+=item C<< -classify => I<classname_string or $hashref> >>
 
-Short form of the options C<< -new, -meth, -class => I<classname> >>.
+In the form C<< -classify => I<classname_string> >>, this is simply the short
+form of the options C<< -new, -meth, -class => I<classname_string> >>.
+
+As of v0.16, in the special form C<< -classify => I<$hashref> >>, where the
+C<-classify> B<must> be the B<last> option in C<@opts> before the
+L<C<$hashref>|/"$hashref">, it is the same as
+C<< -new, -meth, -class => __PACKAGE__, I<$hashref> >> - that is, the current
+package's name is used as the custom class name. It does not make sense to use
+this outside of an explicit package, since your class will be named C<main>.
+With this option, the C<Point> example in the L</Synopsis> can be written like
+the following, which can be useful if you want to add more things to the
+C<package>, or perhaps if you want to write your methods as regular C<sub>s:
+
+	{
+		package Point;
+		use Util::H2O;
+		h2o -classify, {
+			angle => sub { my $self = shift; atan2($self->y, $self->x) }
+		}, qw/ x y /;
+	}
+
+Note C<h2o> will remain in the package's namespace, one possibility is that you
+could load L<namespace::clean> after you load this module.
 
 =item C<< -isa => I<arrayref or scalar> >>
 
@@ -154,6 +176,9 @@ Whether or not to clean up the generated package when the object is
 destroyed. Defaults to I<false> when C<-class> is specified, I<true>
 otherwise. If this is I<false>, be aware that the packages will stay
 in Perl's symbol table and use memory accordingly.
+
+As of v0.16, this module will refuse to delete the package if it
+is named C<main>.
 
 =item C<< -lock => I<bool> >>
 
@@ -287,6 +312,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		}
 		elsif ($_[0] eq '-classify') {
 			$class = (shift, shift);
+			if ( ref $class eq 'HASH' ) { unshift @_, $class; $class = caller; }
 			croak "invalid -classify option value"
 				if !defined $class || ref $class || !length $class;
 			$meth = 1; $new = 1;
@@ -327,7 +353,11 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	if ( $destroy || $clean ) {
 		my $sub = sub {
 			$destroy and ( eval { $destroy->($_[0]); 1 } or carp $@ );  ## no critic (ProhibitMixedBooleanOperators)
-			$clean and delete_package($pack) };
+			if ( $clean ) {
+				if ( $pack eq 'main' ) { carp "h2o refusing to delete package \"main\"" }
+				else { delete_package($pack) }
+			}
+		};
 		{ no strict 'refs'; *{$pack.'::DESTROY'} = $sub }  ## no critic (ProhibitNoStrict)
 	}
 	if ( $new ) {
