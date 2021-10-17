@@ -131,10 +131,10 @@ END_CODE
 	}, "bar\nworld!\nbeans\n0.927\n", 'output of synopsis correct';
 };
 
-subtest 'cookbook code' => sub { plan tests=>16;
+subtest 'cookbook code' => sub { plan tests=>21;
 	my $codes = getverbatim($PERLFILES[0], qr/\b(?:cookbook)\b/i);
-	is @$codes, 5, 'verbatim block count';
-	my ($c_cfg,$c_db1,$c_db2,$c_up1,$c_up2) = @$codes;
+	is @$codes, 6, 'verbatim block count';
+	my ($c_cfg,$c_db1,$c_db2,$c_auto,$c_up1,$c_up2) = @$codes;
 	# Config::Tiny
 	is capture_merged {
 		my ($tfh, $config_filename) = tempfile(UNLINK=>1);
@@ -161,6 +161,15 @@ END CODE
 	is capture_merged {
 		eval "{ use warnings; use strict; $c_db1\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
 	}, $exp1, 'debugging output correct';
+	# Autoloading Example
+	is capture_merged {
+		eval "{ use warnings; use strict; $c_auto\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
+	}, "", 'autoloading output empty';
+	my $auto = new_ok 'HashLikeObj';
+	is $auto->foobar, undef, 'read unknown hash key';
+	$auto->abc(1234);
+	is $auto->defghi(5678), 5678, 'setter rv';
+	is_deeply $auto, { abc=>1234, defghi=>5678 }, 'hash as expected';
 	# Upgrading to Moo
 	is capture_merged {
 		eval "{ use warnings; use strict; $c_up1\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)

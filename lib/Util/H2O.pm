@@ -276,8 +276,8 @@ and L<perlobj/AUTOLOAD>. Without the C<-meth> option, you will get a
 "catch-all" accessor to which all method calls to unknown method names will go,
 and with C<-meth> enabled (which is implied by C<-classify>), you can install
 your own custom C<AUTOLOAD> handler by passing a coderef as the value for this
-key. However, it is important to note that enabling autoloading removes any
-typo protection on method names.
+key - see L</An Autoloading Example>. However, it is important to note that
+enabling autoloading removes any typo protection on method names!
 
 =back
 
@@ -437,6 +437,21 @@ Outputs:
 	  quz => # Util::H2O::h2o()
 	         { abc => 123 },
 	}
+
+=head2 An Autoloading Example
+
+If you wanted to create a class where (almost!) every method call is
+automatically translated to a hash access of the corresponding key, here's how
+you could do that:
+
+	h2o -classify=>'HashLikeObj', -nolock, {
+		AUTOLOAD => sub {
+			my $self = shift;
+			our $AUTOLOAD;
+			( my $key = $AUTOLOAD ) =~ s/.*:://;
+			$self->{$key} = shift if @_;
+			return $self->{$key};
+		} };
 
 =head2 Upgrading to Moo
 
