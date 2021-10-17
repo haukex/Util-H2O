@@ -136,13 +136,13 @@ With this option, the C<Point> example in the L</Synopsis> can be written like
 the following, which can be useful if you want to add more things to the
 C<package>, or perhaps if you want to write your methods as regular C<sub>s:
 
-	{
-		package Point;
-		use Util::H2O;
-		h2o -classify, {
-			angle => sub { my $self = shift; atan2($self->y, $self->x) }
-		}, qw/ x y /;
-	}
+ {
+     package Point;
+     use Util::H2O;
+     h2o -classify, {
+          angle => sub { my $self = shift; atan2($self->y, $self->x) }
+     }, qw/ x y /;
+ }
 
 Note C<h2o> will remain in the package's namespace, one possibility is that you
 could load L<namespace::clean> after you load this module.
@@ -394,16 +394,16 @@ C<h2o> object from a configuration file, and if you have L<Config::Tiny> v2.27
 or newer, the second part of the example for writing the configuration file
 back out will work too:
 
-	use Util::H2O;
-	use Config::Tiny;
-	
-	my $config = h2o -recurse, {%{ Config::Tiny->read($config_filename) }};
-	
-	say $config->foo->bar;  # prints the value of "bar" in section "[foo]"
-	$config->foo->bar("Hello, World!");  # change value
-	
-	# write file back out, requires Config::Tiny v2.27 or newer
-	Config::Tiny->new({%$config})->write($config_filename);
+ use Util::H2O;
+ use Config::Tiny;
+ 
+ my $config = h2o -recurse, {%{ Config::Tiny->read($config_filename) }};
+ 
+ say $config->foo->bar;  # prints the value of "bar" in section "[foo]"
+ $config->foo->bar("Hello, World!");  # change value
+ 
+ # write file back out, requires Config::Tiny v2.27 or newer
+ Config::Tiny->new({%$config})->write($config_filename);
 
 Please be aware that since the above code only uses shallow copies, the nested
 hashes are actually not copied, and the second L<Config::Tiny> object's nested
@@ -416,27 +416,27 @@ dumps of these objects will be somewhat incomplete because they won't show the
 methods. However, if you'd like somewhat nicer looking dumps of the I<data>
 contained in the objects, one way you can do that is with L<Data::Dump::Filtered>:
 
-	use Util::H2O;
-	use Data::Dump qw/dd/;
-	use Data::Dump::Filtered qw/add_dump_filter/;
-	add_dump_filter( sub {
-		my ($ctx, $obj) = @_;
-		return { bless=>'', comment=>'Util::H2O::h2o()' }
-			if $ctx->class=~/^Util::H2O::/;
-		return undef; # normal Data::Dump processing for all other objects
-	});
-	
-	my $x = h2o -recurse, { foo => "bar", quz => { abc => 123 } };
-	dd $x;
+ use Util::H2O;
+ use Data::Dump qw/dd/;
+ use Data::Dump::Filtered qw/add_dump_filter/;
+ add_dump_filter( sub {
+     my ($ctx, $obj) = @_;
+     return { bless=>'', comment=>'Util::H2O::h2o()' }
+         if $ctx->class=~/^Util::H2O::/;
+     return undef; # normal Data::Dump processing for all other objects
+ });
+ 
+ my $x = h2o -recurse, { foo => "bar", quz => { abc => 123 } };
+ dd $x;
 
 Outputs:
 
-	# Util::H2O::h2o()
-	{
-	  foo => "bar",
-	  quz => # Util::H2O::h2o()
-	         { abc => 123 },
-	}
+ # Util::H2O::h2o()
+ {
+   foo => "bar",
+   quz => # Util::H2O::h2o()
+          { abc => 123 },
+ }
 
 =head2 An Autoloading Example
 
@@ -444,40 +444,40 @@ If you wanted to create a class where (almost!) every method call is
 automatically translated to a hash access of the corresponding key, here's how
 you could do that:
 
-	h2o -classify=>'HashLikeObj', -nolock, {
-		AUTOLOAD => sub {
-			my $self = shift;
-			our $AUTOLOAD;
-			( my $key = $AUTOLOAD ) =~ s/.*:://;
-			$self->{$key} = shift if @_;
-			return $self->{$key};
-		} };
+ h2o -classify=>'HashLikeObj', -nolock, {
+     AUTOLOAD => sub {
+         my $self = shift;
+         our $AUTOLOAD;
+         ( my $key = $AUTOLOAD ) =~ s/.*:://;
+         $self->{$key} = shift if @_;
+         return $self->{$key};
+     } };
 
 =head2 Upgrading to Moo
 
 Let's say you've used this module to whip up two simple classes:
 
-	h2o -classify => 'My::Class', {}, qw/ foo bar details /;
-	h2o -classify => 'My::Class::Details', {}, qw/ a b /;
+ h2o -classify => 'My::Class', {}, qw/ foo bar details /;
+ h2o -classify => 'My::Class::Details', {}, qw/ a b /;
 
 But now you need more features and would like to upgrade to a better OO system
 like L<Moo>. Here's how you'd write the above code using that, with some
 L<Type::Tiny> thrown in:
 
-	package My::Class2 {
-		use Moo;
-		use Types::Standard qw/ InstanceOf /;
-		use namespace::clean; # optional but recommended
-		has foo     => (is=>'rw');
-		has bar     => (is=>'rw');
-		has details => (is=>'rw', isa=>InstanceOf['My::Class2::Details']);
-	}
-	package My::Class2::Details {
-		use Moo;
-		use namespace::clean;
-		has a => (is=>'rw');
-		has b => (is=>'rw');
-	}
+ package My::Class2 {
+     use Moo;
+     use Types::Standard qw/ InstanceOf /;
+     use namespace::clean; # optional but recommended
+     has foo     => (is=>'rw');
+     has bar     => (is=>'rw');
+     has details => (is=>'rw', isa=>InstanceOf['My::Class2::Details']);
+ }
+ package My::Class2::Details {
+     use Moo;
+     use namespace::clean;
+     has a => (is=>'rw');
+     has b => (is=>'rw');
+ }
 
 =head1 See Also
 

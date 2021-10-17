@@ -157,7 +157,7 @@ END CODE
 	like ref($config->{hello}), $Util::H2O::_PACKAGE_REGEX, 'nested hash as expected';  ## no critic (ProtectPrivateVars)
 	is $config->{hello}->world, "xyz", 'call method in nested hash';
 	# Debugging
-	( my $exp1 = "$c_db2\n" ) =~ s/^\ {8}//mg;
+	( my $exp1 = "$c_db2\n" ) =~ s/^\ //mg;
 	is capture_merged {
 		eval "{ use warnings; use strict; $c_db1\n;1}" or die $@;  ## no critic (ProhibitStringyEval, RequireCarping)
 	}, $exp1, 'debugging output correct';
