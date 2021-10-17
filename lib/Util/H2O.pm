@@ -159,8 +159,8 @@ Generates a constructor named C<new> in the package. The constructor
 works as a class and instance method, and dies if it is given any
 arguments that it doesn't know about. If you want more advanced
 features, like required arguments, validation, or other
-initialization, you should probably switch to something like L<Moo>
-instead.
+initialization, you should probably L<switch|/"Upgrading to Moo">
+to something like L<Moo> instead.
 
 =item C<< -destroy => I<coderef> >>
 
@@ -477,7 +477,7 @@ L<Object::Result|Object::Result>, and L<Hash::Wrap|Hash::Wrap>,
 the latter of which also contains a comprehensive list of similar
 modules.
 
-For real OO work, I like L<Moo> and L<Type::Tiny>.
+For real OO work, I like L<Moo> and L<Type::Tiny> (see L</"Upgrading to Moo">).
 
 =head1 Author, Copyright, and License
 
