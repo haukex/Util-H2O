@@ -460,7 +460,7 @@ Let's say you've used this module to whip up two simple classes:
  h2o -classify => 'My::Class', {}, qw/ foo bar details /;
  h2o -classify => 'My::Class::Details', {}, qw/ a b /;
 
-But now you need more features and would like to upgrade to a better OO system
+But now you need more features and would like to upgrade to an actual OO system
 like L<Moo>. Here's how you'd write the above code using that, with some
 L<Type::Tiny> thrown in:
 
