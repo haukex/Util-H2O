@@ -153,6 +153,10 @@ Convenience option to set the L<C<@ISA>|perlvar/"@ISA"> variable in the package
 of the object, so that the object inherits from that/those package(s).
 This option was added in v0.14.
 
+B<Warning:> The methods created by C<h2o> will not call superclass methods.
+This means the parent class' C<DESTROY> method(s) are not called, and any
+accessors generated from hash keys are blindly overriden.
+
 =item C<-new>
 
 Generates a constructor named C<new> in the package. The constructor
