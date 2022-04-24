@@ -4,3 +4,6 @@
 (^|/)\.git
 ^\.(travis|appveyor)\.yml$
 (^|/)\..*\.swp$
+^pm_to_blib$
+^cover_db/
+^blib/

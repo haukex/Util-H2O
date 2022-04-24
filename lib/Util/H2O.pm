@@ -528,7 +528,7 @@ For real OO work, I like L<Moo> and L<Type::Tiny> (see L</"Upgrading to Moo">).
 
 =head1 Author, Copyright, and License
 
-Copyright (c) 2020-2021 Hauke Daempfling (haukex@zero-g.net).
+Copyright (c) 2020-2022 Hauke Daempfling (haukex@zero-g.net).
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl 5 itself.
