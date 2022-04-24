@@ -44,6 +44,7 @@ our $VERSION = '0.16';
 # For AUTHOR, COPYRIGHT, AND LICENSE see the bottom of this file
 
 our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
+our @EXPORT_OK = qw/ o2h /;
 
 BEGIN {
 	# lock_ref_keys wasn't available until Hash::Util 0.06 / Perl v5.8.9
@@ -385,6 +386,32 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	return $hash;
 }
 
+=head2 C<o2h I<$h2object>>
+
+This function takes an object as created by C<h2o> and turns it back into a
+hashref by making shallow copies of the object hash and any nested objects that
+may have been created via C<-recurse> (or created manually). This function is
+recursive by default because for a non-recursive operation you can simply
+write: C<{%$h2object}> (making a shallow copy). Unlike C<h2o>, this function
+returns a new hashref instead of modifying the given variable in place (unless
+what you give this function is not an C<h2o> object, in which case it will just
+be returned unchanged).
+
+B<Note> that this function operates only on objects in the default package - it
+does not step into plain arrayrefs or hashrefs, nor does it operate on objects
+created with the C<-class> or C<-classify> options. Also be aware that because
+methods created via C<-meth> are removed from the object hash, these will
+disappear in the resulting hashref.
+
+This function was added in v0.18.
+
+=cut
+
+sub o2h {
+	my $h2o = shift;
+	return ref($h2o) =~ $_PACKAGE_REGEX ? { map { $_ => o2h($h2o->{$_}) } keys %$h2o } : $h2o;
+}
+
 1;
 __END__
 
@@ -412,6 +439,7 @@ back out will work too:
 Please be aware that since the above code only uses shallow copies, the nested
 hashes are actually not copied, and the second L<Config::Tiny> object's nested
 hashes will still be C<h2o> objects - but L<Config::Tiny> doesn't mind this.
+Alternatively, as of v0.18, you can use the C<o2h> function.
 
 =head2 Debugging
 

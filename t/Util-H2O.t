@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 238;
+use Test::More tests => 262;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -92,6 +92,52 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	$o2->foo->{def} = 456;
 	is_deeply [sort keys %$o2], [qw/ abc foo /];
 	is_deeply [sort keys %{$o2->foo}], [qw/ bar def /];
+}
+
+# o2h
+{
+	BEGIN { use_ok 'Util::H2O', 'o2h' }
+	my $o = h2o -recurse, { a=>[ h2o {abc=>123} ], h=>{ x=>'y', z=>undef }, c=>sub {} };
+	like blessed($o), $PACKRE;
+	like blessed($o->h), $PACKRE;
+	is $o->h->x, 'y';
+	is $o->a->[0]->abc, 123;
+	$o->h->z({ foo => h2o {def=>456} });
+	is ref $o->h->z, 'HASH';
+	is $o->h->z->{foo}->def, 456;
+	my $h = o2h $o;
+	is ref $h, 'HASH';
+	is ref $h->{a}, 'ARRAY';
+	like blessed($h->{a}[0]), $PACKRE;
+	is ref $h->{h}, 'HASH';
+	is ref $h->{h}{z}, 'HASH';
+	like blessed($h->{h}{z}{foo}), $PACKRE;
+	is $h->{h}{z}{foo}->def, 456;
+	is ref $h->{c}, 'CODE';
+	is $h->{h}{x}, 'y';
+}
+# o2h + -lock + -ro
+{
+	my $o = h2o -recurse, -lock=>1, -ro, { abc => { def => { ghi => 555 } } };
+	SKIP: {
+		skip "Won't work on old Perls", 2 if $] lt '5.008009';
+		ok exception { my $x = $o->{zzz} };
+		ok exception { my $y = $o->{abc}{def}{yyy} };
+	}
+	my $h = o2h $o;
+	is ref $h, 'HASH';
+	is ref $h->{abc}{def}, 'HASH';
+	$h->{zzz} = 543;
+	$h->{abc}{def}{ghi} = 777;
+	is_deeply $h, { abc => { def => { ghi => 777 } }, zzz => 543 };
+}
+# o2h + -meth
+{
+	my $o = h2o -meth, { foo => "bar", quz => sub { "baz" } };
+	is $o->foo, "bar";
+	is $o->quz, "baz";
+	my $h = o2h $o;
+	is_deeply $h, { foo => "bar" };
 }
 
 # -meth
