@@ -522,9 +522,16 @@ Similar modules include L<Object::Adhoc|Object::Adhoc>,
 L<Object::Anon|Object::Anon>, L<Hash::AsObject|Hash::AsObject>,
 L<Object::Result|Object::Result>, and L<Hash::Wrap|Hash::Wrap>,
 the latter of which also contains a comprehensive list of similar
-modules.
+modules. Also, see L<Class::Tiny|Class::Tiny> for another minimalistic class
+generation module.
 
-For real OO work, I like L<Moo> and L<Type::Tiny> (see L</"Upgrading to Moo">).
+For real OO work, I like L<Moo|Moo> and L<Type::Tiny|Type::Tiny> (see
+L</"Upgrading to Moo">).
+
+Further modules that might be useful in combination with this one:
+L<Hash::Merge|Hash::Merge> for merging hashes before using this module (for
+example, to supply default values for keys); L<Role::Tiny|Role::Tiny> for
+applying roles.
 
 =head1 Author, Copyright, and License
 
