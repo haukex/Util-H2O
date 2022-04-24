@@ -122,6 +122,15 @@ name, you will get "redefined" warnings. Therefore, if you want to
 create multiple objects in the same package, you should probably use
 C<-new>.
 
+If you wanted to generate a unique package name in a different package,
+you could use:
+C<< h2o -class => sprintf('My::Class::Name::_%x', $hash+0), $hash >>,
+perhaps even in combination with C<< -isa => 'My::Class::Name' >>.
+However, keep in mind that you shouldn't step into another class' namespace
+without knowing that this won't cause conflicts, and also that not using the
+default class names means that functions like C<o2h> will no longer identify
+the objects as coming from C<h2o>.
+
 =item C<< -classify => I<classname_string or $hashref> >>
 
 In the form C<< -classify => I<classname_string> >>, this is simply the short
@@ -532,6 +541,11 @@ Further modules that might be useful in combination with this one:
 L<Hash::Merge|Hash::Merge> for merging hashes before using this module (for
 example, to supply default values for keys); L<Role::Tiny|Role::Tiny> for
 applying roles.
+
+=head1 Special Thanks
+
+Thanks to oodler577 on GitHub (OODLER on CPAN), whose many suggestions have
+inspired a lot of the features in this module!
 
 =head1 Author, Copyright, and License
 
