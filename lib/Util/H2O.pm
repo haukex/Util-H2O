@@ -229,6 +229,19 @@ This option was added in v0.12. Using this option will not work and cause a
 warning when used on really old Perls (before v5.8.9), because this
 functionality was not yet available there.
 
+=item C<< -pass => "ref" I<or> "undef" >>
+
+When this option is set to C<"undef"> (that's the string C<"undef">, I<not>
+C<undef> itself!), then passing a value of C<undef> for the C<$hashref> will
+not result in a fatal error, the value will simply be passed through.
+
+When this option is set to the string C<"ref">, then any value other than a
+plain hashref that is a reference, including objects, plus C<undef> as above,
+will be passed through without modification. Any hashes nested inside of these
+references will not be descended into, even when C<-recurse> is specified.
+
+This option was added in v0.18.
+
 =back
 
 =head3 C<$hashref>
@@ -310,8 +323,8 @@ The (now blessed and optionally locked) C<$hashref>.
 our $_PACKAGE_REGEX = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro);
-	while ( @_ && $_[0] && !ref$_[0] ) {
+	my ($recurse,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro,$pass);
+	while ( @_ && $_[0] && !ref$_[0] && $_[0]=~/^-/ ) {
 		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
 		elsif ($_[0] eq '-meth' ) { $meth    = shift }
 		elsif ($_[0] eq '-clean') { $clean   = (shift, shift()?1:0) }
@@ -319,6 +332,11 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		elsif ($_[0] eq '-nolock'){ $lock = 0; shift }
 		elsif ($_[0] eq '-ro'   ) { $ro      = shift }
 		elsif ($_[0] eq '-new'  ) { $new     = shift }
+		elsif ($_[0] eq '-pass' ) {
+			$pass = (shift, shift);
+			croak "invalid -pass option value (must be 'undef' or 'ref')"
+				if !defined $pass || $pass ne 'undef' && $pass ne 'ref';
+		}
 		elsif ($_[0] eq '-class') {
 			$class = (shift, shift);
 			croak "invalid -class option value"
@@ -345,7 +363,19 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 	$clean = !defined $class unless defined $clean;
 	$lock = 1 unless defined $lock;
 	my $hash = shift;
-	croak "h2o must be given a plain hashref" unless ref $hash eq 'HASH';
+	if ( ref $hash ne 'HASH' ) {
+		if ( $pass ) {
+			if ( $pass eq 'ref' ) {
+				return $hash if !defined $hash || ref $hash;
+				croak "this h2o call only accepts references or undef";
+			}
+			else { # $pass must be 'undef' due to checks above
+				return $hash if !defined $hash;
+				croak "this h2o call only accepts a plain hashref or undef";
+			}
+		}
+		croak "this h2o call only accepts plain hashrefs";
+	}
 	croak "h2o with additional keys doesn't make sense with -ro" if $ro && @_ && !$new;
 	my %ak   = map {$_=>1} @_;
 	my %keys = map {$_=>1} @_, keys %$hash;

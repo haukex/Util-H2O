@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 262;
+use Test::More tests => 283;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -565,6 +565,37 @@ SKIP: {
 	is grep({ /\btoo old\b/i } @w), 2;
 }
 
+{ # -pass
+	like blessed( h2o {} ), $PACKRE;
+	like blessed( h2o -pass=>'undef', {} ), $PACKRE;
+	# "undef"
+	is h2o(-pass=>'undef', undef), undef;
+	ok exception { h2o -pass=>'undef', [] };
+	ok exception { h2o -pass=>'undef', "foo" };
+
+	my $sref = \"foo";
+	my $aref = [ { xyz=>'abc' } ];
+	my $obj = bless {}, "SomeClass";
+
+	# "ref"
+	like blessed( h2o -pass=>'ref', {} ), $PACKRE;
+	is h2o(-pass=>'ref', $sref), $sref;
+	is h2o(-pass=>'ref', $obj), $obj;
+	is 0+h2o(-recurse, -pass=>'ref', $aref), 0+$aref;
+	ok !blessed($aref->[0]);
+	is ref($aref->[0]), 'HASH';
+	is h2o(-pass=>'ref', undef), undef;
+	ok exception { h2o -pass=>'ref', "foo" };
+	ok exception { h2o -pass=>'ref', 1234 };
+	ok exception { h2o -pass=>'ref', -123 };
+	ok exception { h2o -pass=>'ref', "-foobar" };
+
+	# Note to self: I decided against implementing "any" because then
+	# there is ambiguity when negative numbers or strings starting with
+	# dashes look like options.
+	ok exception { h2o -pass=>'any', {} };
+}
+
 ok exception { h2o() };
 ok exception { h2o("blah") };
 ok exception { h2o(undef) };
@@ -573,6 +604,7 @@ ok exception { h2o(-meth,-recurse) };
 ok exception { h2o(bless {}, "SomeClass") };
 ok exception { h2o({DESTROY=>'foo'}) };
 ok exception { h2o(-new, { new=>5 }) };
+ok exception { h2o(-foobar) };
 ok exception { h2o(-class) };
 ok exception { h2o(-class=>'') };
 ok exception { h2o(-class=>[]) };
@@ -582,6 +614,9 @@ ok exception { h2o(-classify=>[]) };
 ok exception { h2o(-destroy=>'') };
 ok exception { h2o(-destroy=>undef) };
 ok exception { h2o(-isa=>{}) };
+ok exception { h2o -pass=>undef, {} };
+ok exception { h2o -pass=>[], {} };
+ok exception { h2o -pass=>"foo", {} };
 
 diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
 	if $] lt '5.008009';
