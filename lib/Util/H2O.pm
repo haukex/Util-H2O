@@ -456,6 +456,19 @@ __END__
 
 =head1 Cookbook
 
+=head2 Keys with Spaces, Dashes, or Other Non-Identifier Characters
+
+If the hash you want to pass to C<h2o> contains keys that are not usable as
+method names, such as keys containing spaces or dashes, you can transform the
+hash before passing it to C<h2o>. There are several ways to do this, including
+in plain Perl, but one of the easier ways is with C<pairmap> from the core
+module L<List::Util>.
+
+ use List::Util 'pairmap';
+ my $hash = { "foo bar" => 123, "quz-ba%z" => 456 };
+ my $obj = h2o { pairmap { $a=~tr/a-zA-Z0-9/_/c; ($a,$b) } %$hash };
+ print $obj->foo_bar, $obj->quz_ba_z, "\n";  # prints "123456"
+
 =head2 Using with Config::Tiny
 
 One common use case for this module is to make accessing hashes nicer, like for
