@@ -472,26 +472,19 @@ module L<List::Util>.
 =head2 Using with Config::Tiny
 
 One common use case for this module is to make accessing hashes nicer, like for
-example those you get from L<Config::Tiny>. Here's how you can create a new
-C<h2o> object from a configuration file, and if you have L<Config::Tiny> v2.27
-or newer, the second part of the example for writing the configuration file
-back out will work too:
+example those you get from L<Config::Tiny|Config::Tiny>. Here's how you can
+create a new C<h2o> object from a configuration file:
 
- use Util::H2O;
- use Config::Tiny;
+ use Util::H2O 0.18 qw/ h2o o2h /;  # v0.18 for o2h
+ use Config::Tiny 2.27;             # v2.27 for writing file back out
  
  my $config = h2o -recurse, {%{ Config::Tiny->read($config_filename) }};
  
  say $config->foo->bar;  # prints the value of "bar" in section "[foo]"
  $config->foo->bar("Hello, World!");  # change value
  
- # write file back out, requires Config::Tiny v2.27 or newer
- Config::Tiny->new({%$config})->write($config_filename);
-
-Please be aware that since the above code only uses shallow copies, the nested
-hashes are actually not copied, and the second L<Config::Tiny> object's nested
-hashes will still be C<h2o> objects - but L<Config::Tiny> doesn't mind this.
-Alternatively, as of v0.18, you can use the C<o2h> function.
+ # write file back out
+ Config::Tiny->new(o2h $config)->write($config_filename);
 
 =head2 Debugging
 
