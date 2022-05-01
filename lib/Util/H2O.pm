@@ -585,6 +585,9 @@ L<Hash::Merge|Hash::Merge> for merging hashes before using this module (for
 example, to supply default values for keys); L<Role::Tiny|Role::Tiny> for
 applying roles.
 
+See also L<Util::H2O::More|Util::H2O::More> by OODLER, a module with additional
+functionality on top of this module.
+
 =head1 Special Thanks
 
 Thanks to oodler577 on GitHub (OODLER on CPAN), whose many suggestions have
