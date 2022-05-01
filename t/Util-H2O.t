@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 283;
+use Test::More tests => 291;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -492,6 +492,32 @@ SKIP: {
 	# This is here just for code coverage, the test for destructor errors being converted
 	# to warnings that used to be here was buggy and moved to the author tests for now.
 	my $od = h2o -destroy=>sub { die "You can safely ignore this warning during testing,\neven if it is followed by another \" at t/Util-H2O.t line ...\"." }, {}; ## no critic (RequireCarping)
+}
+{ # -destroy + -isa
+	my $superdest = 0;
+	{
+		package DestIsaTest;  ## no critic (ProhibitMultiplePackages)
+		sub DESTROY { $superdest++; return }
+	}
+	my $dest = 0;
+	my $o1 = h2o -isa=>'DestIsaTest', -destroy=>sub{$dest++}, {};
+	is $dest, 0;
+	is $superdest, 0;
+	$o1=undef;
+	is $dest, 1;
+	is $superdest, 0;
+	my $dest2 = 0;
+	h2o -isa=>'DestIsaTest', -classify=>'DestIsaH2O', { DESTROY=>sub{$dest2++} };
+	is $dest2, 1;
+	is $superdest, 0;
+	{
+		package DestIsaH2O2;  ## no critic (ProhibitMultiplePackages)
+		use Util::H2O;
+		h2o -isa=>'DestIsaTest', -classify, {
+			DESTROY=>sub{ my $self=shift; $dest2++; $self->SUPER::DESTROY(@_) } };
+	}
+	is $dest2, 2;
+	is $superdest, 1;
 }
 
 # DESTROY
