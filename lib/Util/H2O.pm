@@ -157,6 +157,11 @@ C<package>, or perhaps if you want to write your methods as regular C<sub>s:
 Note C<h2o> will remain in the package's namespace, one possibility is that you
 could load L<namespace::clean> after you load this module.
 
+You might also note that in the above example, one could write C<angle> as a
+regular C<sub> in the package. And at that point, one might recongize the
+similarity between the code and what one can do with e.g.
+L<Class::Tiny|Class::Tiny> or even L<Moo|Moo>.
+
 =item C<< -isa => I<arrayref or scalar> >>
 
 Convenience option to set the L<C<@ISA>|perlvar/"@ISA"> variable in the package
