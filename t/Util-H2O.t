@@ -646,10 +646,12 @@ SKIP: {
 	is_deeply [keys %$o], ["quz"];
 }
 
-ok !grep { /redefined/i } warns {
+my @redef_warns = warns {
 	h2o { abc => "def" }, qw/ abc /;
 	h2o {}, qw/ abc abc /;
 };
+#TODO: Spurious CPAN Testers failures here https://www.cpantesters.org/distro/U/Util-H2O.html?oncpan=1&distmat=1&version=0.18&grade=3
+ok !grep { /redefined/i } @redef_warns or diag explain \@redef_warns;  ## no critic (ProhibitMixedBooleanOperators)
 
 SKIP: {
 	skip "Tests only for old Perls", 4 if $] ge '5.008009';
