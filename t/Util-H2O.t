@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 322;
+use Test::More tests => 330;
 use Scalar::Util qw/blessed/;
 
 sub exception (&) { eval { shift->(); 1 } ? undef : ($@ || die) }  ## no critic (ProhibitSubroutinePrototypes, RequireFinalReturn, RequireCarping)
@@ -119,6 +119,26 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 		];
 	is $o3->[0]->foo, 'bar';
 	is $o3->[1]->quz, 'baz';
+}
+# -arrays with various ref types
+{
+	my $sref = \"foo";
+	my $obj = bless { foo=>['hello', {bar=>'world'}] }, "SomeClass";
+	my $aref = [ { xyz=>'abc', obj=>$obj }, $obj ];
+	my $o1 = h2o -arrays, {
+		sref => $sref,
+		aref => $aref,
+		oref => $obj,
+	};
+	like blessed($o1), $PACKRE;
+	is 0+$o1->sref, 0+$sref;
+	is $o1->aref, $aref;
+	like blessed($o1->aref->[0]), $PACKRE;
+	is $o1->aref->[0]->obj, $obj;
+	is $o1->aref->[1], $obj;
+	is ref $o1->oref->{foo}, 'ARRAY';
+	is ref $o1->oref->{foo}[1], 'HASH';
+
 }
 # -arrays + -pass
 {
