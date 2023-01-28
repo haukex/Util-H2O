@@ -31,7 +31,7 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
-is $Util::H2O::VERSION, '0.20';
+is $Util::H2O::VERSION, '0.22';
 
 diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
 	if $] lt '5.008009';
