@@ -206,7 +206,9 @@ This option was added in v0.14.
 Whether or not to clean up the generated package when the object is
 destroyed. Defaults to I<false> when C<-class> is specified, I<true>
 otherwise. If this is I<false>, be aware that the packages will stay
-in Perl's symbol table and use memory accordingly.
+in Perl's symbol table and use memory accordingly, and any subs/methods
+in those packages may cause "redefined" warnings if the package
+name is re-used.
 
 As of v0.16, this module will refuse to delete the package if it
 is named C<main>.
@@ -528,7 +530,7 @@ __END__
 
 If the hash you want to pass to C<h2o> contains keys that are not usable as
 method names, such as keys containing spaces or dashes, you can transform the
-hash before passing it to C<h2o>. There are several ways to do this, including
+hash before passing it to C<h2o>. There are several ways to achieve this, including
 in plain Perl, but one of the easier ways is with C<pairmap> from the core
 module L<List::Util>.
 
