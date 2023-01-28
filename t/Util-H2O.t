@@ -108,11 +108,11 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	my $o2 = h2o -arrays, {
 		a=>[
 			{ b=>[ [
-				'c', { d=>[ { e=>'f' } ] }
+				'c', { d=>{ e=>[ { f=>'g' } ] } }
 			] ] }
 		] };
 	is $o2->a->[0]->b->[0][0], 'c';
-	is $o2->a->[0]->b->[0][1]->d->[0]->e, 'f';
+	is $o2->a->[0]->b->[0][1]->d->e->[0]->f, 'g';
 	my $o3 = h2o -arrays, [
 			{ foo=>'bar' },
 			{ quz=>'baz' },
@@ -215,12 +215,11 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 		{ foo => { bar => "quz" },
 			hello => [ { abc=>"def" }, { ghi=>{ jkl=>"mno" } } ] },
 		{
-			a=>[
-				{ b=>[ [
-					'c', { d=>[ { e=>'f' } ] }
-				] ] }
-			]
-		},
+		a=>[
+			{ b=>[ [
+				'c', { d=>{ e=>[ { f=>'g' } ] } }
+			] ] }
+		] },
 		[
 			{ foo=>'bar' },
 			{ quz=>'baz' },

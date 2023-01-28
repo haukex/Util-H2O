@@ -417,7 +417,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 			if ( $arrays && ref eq 'ARRAY' )
 				{ h2o(-arrays,  -lock=>$lock, ($ro?-ro:()), $_) }
 			elsif ( ref eq 'HASH' )
-				{ h2o(-recurse, -lock=>$lock, ($ro?-ro:()), $_) }
+				{ h2o($arrays?-arrays:-recurse, -lock=>$lock, ($ro?-ro:()), $_) }
 		}
 	}
 	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
