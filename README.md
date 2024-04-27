@@ -13,7 +13,7 @@ Please see the module's documentation (POD) for details (try the command
 [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/haukex/Util-H2O?svg=true)](https://ci.appveyor.com/project/haukex/util-h2o)
 [![Coverage Status](https://coveralls.io/repos/github/haukex/Util-H2O/badge.svg)](https://coveralls.io/github/haukex/Util-H2O)
 [![Kwalitee Score](https://cpants.cpanauthors.org/dist/Util-H2O.svg)](https://cpants.cpanauthors.org/dist/Util-H2O)
-[![CPAN Testers](https://badges.zero-g.net/cpantesters/Util-H2O.svg)](http://matrix.cpantesters.org/?dist=Util-H2O)
+[![CPAN Testers](https://haukex.github.io/my-badges/Util-H2O.svg)](http://matrix.cpantesters.org/?dist=Util-H2O)
 
 Installation
 ------------
