@@ -1,0 +1,10 @@
+{
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": false,
+    "editor.rulers": [ 100 ],
+    "indentRainbow.ignoreErrorLanguages": [ "perl", "markdown" ],
+    "cSpell.language": "en,en-US",
+    "cSpell.enableFiletypes": [ "perl" ],
+    "cSpell.words": [ "Hauke", "Dämpfling", "Daempfling", "haukex" ],
+}
+/* vim: set filetype=javascript ts=4 sw=4 expandtab : */
