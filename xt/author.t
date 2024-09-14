@@ -29,12 +29,14 @@ BEGIN {
 	$BASEDIR = catdir($FindBin::Bin,updir);
 	@PERLFILES = (
 		catfile($BASEDIR,qw/ lib Util H2O.pm /),
+		catfile($BASEDIR,qw/ lib Util H2O Also.pm /),
 		bsd_glob("$BASEDIR/{t,xt}/*.{t,pm}"),
 	);
 }
 
-use Test::More tests => 3*@PERLFILES + 6;
+use Test::More tests => 3*@PERLFILES + 7;
 BEGIN { use_ok 'Util::H2O' }
+BEGIN { use_ok 'Util::H2O::Also' }
 note explain \@PERLFILES;
 
 use File::Temp qw/tempfile/;

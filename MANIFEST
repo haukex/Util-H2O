@@ -1,11 +1,14 @@
 Changes
 lib/Util/H2O.pm
+lib/Util/H2O/Also.pm
 LICENSE.txt
 Makefile.PL
 MANIFEST			This list of files
 README.md
 t/Util-H2O.t
+t/Util-H2O-Also.t
 xt/author.t
+xt/bench.t
 xt/cpanfile
 xt/mem.t
 xt/redef.t
