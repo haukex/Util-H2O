@@ -93,7 +93,7 @@ is $Util::H2O::Also::VERSION, '0.26';
 # test subclassing
 {
     package Test1;
-    use parent 'Util::H2O::Also';
+    our @ISA = ('Util::H2O::Also');  ## no critic (ProhibitExplicitISA)
     sub quz { return 'Quz' }
 }
 {
