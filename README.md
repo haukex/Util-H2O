@@ -30,7 +30,7 @@ instead of `make`.
 Dependencies
 ------------
 
-Requirements: Perl v5.6 or higher (a more current version is *strongly*
+Requirements: Perl v5.8.9 or higher (a more current version is *strongly*
 recommended) and several of its core modules; users of older Perls may need
 to upgrade some core modules.
 
