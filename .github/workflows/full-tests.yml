@@ -61,6 +61,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Tests and author tests
-        run: prove -lv t xt
+        run: |
+          cpanm namespace::clean
+          prove -lv t xt
       - name: Coverage
         run: perl Makefile.PL && make authorcover
