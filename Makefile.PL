@@ -14,6 +14,10 @@ WriteMakefile(
 				file => 'lib/Util/H2O.pm',
 				version => '0.26',
 			},
+			'Util::H2O::Also' => {
+				file => 'lib/Util/H2O/Also.pm',
+				version => '0.26',
+			},
 		},
 		resources => {
 			homepage => 'https://github.com/haukex/Util-H2O',

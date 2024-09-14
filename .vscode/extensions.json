@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "github.vscode-github-actions",
+        "ms-vscode.live-server",
         "oderwat.indent-rainbow",
         "streetsidesoftware.code-spell-checker",
     ]
