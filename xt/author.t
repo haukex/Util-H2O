@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/env perl  ## no critic (ProhibitExcessMainComplexity)
 use warnings;
 use strict;
 
@@ -29,12 +29,14 @@ BEGIN {
 	$BASEDIR = catdir($FindBin::Bin,updir);
 	@PERLFILES = (
 		catfile($BASEDIR,qw/ lib Util H2O.pm /),
+		catfile($BASEDIR,qw/ lib Util H2O Also.pm /),
 		bsd_glob("$BASEDIR/{t,xt}/*.{t,pm}"),
 	);
 }
 
-use Test::More tests => 3*@PERLFILES + 7;
+use Test::More tests => 3*@PERLFILES + 9;
 BEGIN { use_ok 'Util::H2O' }
+BEGIN { use_ok 'Util::H2O::Also' }
 note explain \@PERLFILES;
 
 use File::Temp qw/tempfile/;
@@ -142,6 +144,21 @@ subtest 'synopsis code' => sub { plan tests=>8;
 			is_deeply \$two, { x=>3, y=>4 }, 'synopsis \$two';
 END_CODE
 	}, "bar\nworld!\nbeans\n0.927\n", 'output of synopsis correct';
+};
+subtest '::Also synopsis' => sub { plan tests=>5;
+	my $verbatim = getverbatim($PERLFILES[1], qr/\b(?:synopsis)\b/i);
+	is @$verbatim, 1, 'verbatim block count' or diag explain $verbatim;
+	$$verbatim[0] =~ s/^(\s*use\s+)parent\b/${1}base/mg if $] lt '5.010001';
+	is capture_merged {
+		my $code = <<"END_CODE"; eval "{$code\n;1}" or die $@; ## no critic (ProhibitStringyEval, RequireCarping)
+			use warnings; use strict;
+			$$verbatim[0]
+			;
+			is_deeply \$hash, { foo=>'bar', x=>'z' }, 'synopsis \$hash';
+			isa_ok \$obj, 'MyClass';
+			isa_ok \$obj, 'Util::H2O::Also';
+END_CODE
+	}, "bar\nbeans\n", 'output of synopsis correct';
 };
 
 subtest 'cookbook code' => sub { plan tests=>22;
