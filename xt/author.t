@@ -72,7 +72,7 @@ pod_file_ok($_) for @PERLFILES;
 my @tasks;
 for my $file (@PERLFILES) {
 	critic_ok($file);
-	minimum_version_ok($file, '5.006');
+	minimum_version_ok($file, '5.008009');
 	open my $fh, '<', $file or die "$file: $!";  ## no critic (RequireCarping)
 	while (<$fh>) {
 		s/\A\s+|\s+\z//g;

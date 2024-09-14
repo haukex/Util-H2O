@@ -6,13 +6,13 @@ WriteMakefile(
 	LICENSE          => 'perl_5',
 	VERSION_FROM     => 'lib/Util/H2O.pm',
 	ABSTRACT_FROM    => 'lib/Util/H2O.pm',
-	MIN_PERL_VERSION => '5.6.0',
+	MIN_PERL_VERSION => '5.8.9',
 	META_MERGE => {
 		'meta-spec' => { version => 2 },
 		provides => {
 			'Util::H2O' => {
 				file => 'lib/Util/H2O.pm',
-				version => '0.24',
+				version => '0.26',
 			},
 		},
 		resources => {
@@ -34,9 +34,7 @@ WriteMakefile(
 		'Carp'                   => 0,
 		'Exporter'               => '5.58',
 		'Symbol'                 => 0,
-		( $] ge '5.008009' ? (
-		    'Hash::Util'         => '0.06',
-		):()),
+		'Hash::Util'             => '0.06',
 	},
 	TEST_REQUIRES => {
 		'Test::More'             => '1.302096',

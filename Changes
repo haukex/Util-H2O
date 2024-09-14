@@ -1,7 +1,7 @@
 Revision history for Perl extension Util::H2O.
 
 0.26	not yet released
-	- ...
+	- Increased minimum required Perl version to 5.8.9
 
 0.24	Wed, Dec 13 2023	commit 10a8b75ad51a195fc8c8a7a5e8633bec4bf6eb8b
 	- fix a bug where o2h would die on scalars that looked like options

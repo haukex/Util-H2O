@@ -1,5 +1,6 @@
 {
     "recommendations": [
+        "github.vscode-github-actions",
         "oderwat.indent-rainbow",
         "streetsidesoftware.code-spell-checker",
     ]

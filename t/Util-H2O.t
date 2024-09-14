@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 343;
+use Test::More tests => 339;
 use Scalar::Util qw/blessed/;
 use Symbol qw/delete_package/;
 
@@ -32,9 +32,6 @@ sub warns (&) { my @w; { local $SIG{__WARN__} = sub { push @w, shift }; shift->(
 diag "This is Perl $] at $^X on $^O";
 BEGIN { use_ok 'Util::H2O' }
 is $Util::H2O::VERSION, '0.26';
-
-diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
-	if $] lt '5.008009';
 
 my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 
@@ -86,11 +83,8 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 }
 {
 	my $o = h2o -recurse, { foo => { bar => "quz" } };
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { $o->{abc} = 123 };
-		ok exception { $o->foo->{def} = 456 };
-	}
+	ok exception { $o->{abc} = 123 };
+	ok exception { $o->foo->{def} = 456 };
 	my $o2 = h2o -recurse, -nolock, { foo => { bar => "quz" } };
 	$o2->{abc} = 123;
 	$o2->foo->{def} = 456;
@@ -153,11 +147,8 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 # -arrays + -lock + -ro
 {
 	my $o = h2o -arrays, -lock=>1, -ro, { abc => [ { def => 'ghi' } ] };
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { my $x = $o->{zzz} };
-		ok exception { my $y = $o->{abc}[0]{def}{yyy} };
-	}
+	ok exception { my $x = $o->{zzz} };
+	ok exception { my $y = $o->{abc}[0]{def}{yyy} };
 	is $o->abc->[0]->def, 'ghi';
 	ok exception { $o->abc(123) };
 	ok exception { $o->abc->[0]->def(123) };
@@ -205,11 +196,8 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 # o2h + -lock + -ro
 {
 	my $o = h2o -recurse, -lock=>1, -ro, { abc => { def => { ghi => 555 } } };
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { my $x = $o->{zzz} };
-		ok exception { my $y = $o->{abc}{def}{yyy} };
-	}
+	ok exception { my $x = $o->{zzz} };
+	ok exception { my $y = $o->{abc}{def}{yyy} };
 	my $h = o2h $o;
 	is ref $h, 'HASH';
 	is ref $h->{abc}{def}, 'HASH';
@@ -268,10 +256,7 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	is $o->y, 222;
 	is_deeply [sort keys %$o], [qw/ x /];
 	is $o->{x}, 111;
-	SKIP: {
-		skip "Won't work on old Perls", 1 if $] lt '5.008009';
-		ok exception { my $x = $o->{y} };
-	}
+	ok exception { my $x = $o->{y} };
 }
 {
 	my $o = h2o -meth, { x=>111, y=>sub{222} }, qw/y/;
@@ -402,11 +387,8 @@ sub checksym {
 	is $n3->abc, 444;
 	like exception { Quz->new(abc=>4,5) }, qr/\bOdd\b/;
 	like exception { Quz->new(def=>4) }, qr/\bUnknown argument\b/i;
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { my $x = $n->{new} };
-		ok exception { my $x = $n->{DESTROY} };
-	}
+	ok exception { my $x = $n->{new} };
+	ok exception { my $x = $n->{DESTROY} };
 }
 {
 	my $o = h2o -meth, -new, { x=>111, y=>sub{222} }, qw/y/;
@@ -448,8 +430,7 @@ sub checksym {
 	is $o->test, "<def>";
 	ok exists &Yet::Another::h2o;
 }
-SKIP: {
-	skip "Won't work on really old Perls", 2 if $] lt '5.008';
+{
 	my @w = warns {
 		my $x = h2o -clean=>1, -classify, {};
 		isa_ok $x, 'main';
@@ -466,19 +447,13 @@ SKIP: {
 	$o->{bar} = 456;
 	is $o->{bar}, 456;
 	is_deeply [sort keys %$o], [qw/ bar foo /];
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { my $x = $o->{quz} };
-		ok exception { $o->{quz} = 789 };
-	}
+	ok exception { my $x = $o->{quz} };
+	ok exception { $o->{quz} = 789 };
 }
 {
 	my $o = h2o -lock=>1, { foo=>123 }, qw/ bar /;
-	SKIP: {
-		skip "Won't work on old Perls", 2 if $] lt '5.008009';
-		ok exception { my $x = $o->{quz} };
-		ok exception { $o->{quz} = 789 };
-	}
+	ok exception { my $x = $o->{quz} };
+	ok exception { $o->{quz} = 789 };
 }
 {
 	my $o = h2o -lock=>0, { foo=>123 }, qw/ bar /;
@@ -511,15 +486,8 @@ SKIP: {
 {
 	h2o -class=>'Baz', -new, {}, qw/ abc /;
 	my $n = Baz->new(abc=>123);
-	if ($] lt '5.008009') {
-		$n->{def} = 456;
-		is_deeply [sort keys %$n], [qw/ abc def /];
-		pass 'dummy'; # so the number of tests still fits
-	}
-	else {
-		ok exception { $n->{def} = 456 };
-		is_deeply [sort keys %$n], [qw/ abc /];
-	}
+	ok exception { $n->{def} = 456 };
+	is_deeply [sort keys %$n], [qw/ abc /];
 }
 {
 	h2o -class=>'Baz2', -new, -nolock, {}, qw/ abc /;
@@ -529,8 +497,7 @@ SKIP: {
 }
 
 # -ro
-SKIP: {
-	skip "Won't work on old Perls", 36 if $] lt '5.008009';
+{
 	my $o = h2o -ro, { foo=>123, bar=>undef };
 	is $o->foo, 123;
 	is $o->bar, undef;
@@ -695,20 +662,6 @@ my @redef_warns = warns {
 # There were spurious CPAN Testers failures here, see xt/redef.t for details
 ok !grep { /redefined/i } @redef_warns or diag explain \@redef_warns;  ## no critic (ProhibitMixedBooleanOperators)
 
-SKIP: {
-	skip "Tests only for old Perls", 4 if $] ge '5.008009';
-	my @w = warns {
-		my $o1 = h2o {};
-		$o1->{bar} = 456;
-		is_deeply [%$o1], [ bar=>456 ];
-		my $o2 = h2o -ro, { foo=>123 };
-		$o2->{foo} = 456;
-		ok exception { $o2->foo(789) };
-		is_deeply [%$o2], [ foo=>456 ];
-	};
-	is grep({ /\btoo old\b/i } @w), 2;
-}
-
 { # -pass
 	like blessed( h2o {} ), $PACKRE;
 	like blessed( h2o -pass=>'undef', {} ), $PACKRE;
@@ -766,8 +719,5 @@ ok exception { o2h(-foobar) };
 ok exception { o2h(-arrays) };
 ok exception { o2h(undef, undef) };
 ok exception { o2h({x=>1},{y=>2}) };
-
-diag "If all tests pass, you can ignore the \"this Perl is too old\" warnings"
-	if $] lt '5.008009';
 
 done_testing;
