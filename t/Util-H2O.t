@@ -20,7 +20,7 @@ L<http://perldoc.perl.org/perlartistic.html>.
 
 =cut
 
-use Test::More tests => 339;
+use Test::More tests => 360;
 use Scalar::Util qw/blessed/;
 use Symbol qw/delete_package/;
 
@@ -293,13 +293,13 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 }
 
 # -isa
+sub get_isa {
+	my $x = shift;
+	$x = ref $x if ref $x;
+	no strict 'refs';  ## no critic (ProhibitNoStrict)
+	return \@{$x.'::ISA'};
+}
 {
-	sub get_isa {
-		my $x = shift;
-		$x = ref $x if ref $x;
-		no strict 'refs';  ## no critic (ProhibitNoStrict)
-		return \@{$x.'::ISA'};
-	}
 	{ package IsaTest2;  ## no critic (ProhibitMultiplePackages)
 		sub foo { return "foo" }
 	}
@@ -310,6 +310,8 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	{ package IsaTest5;  ## no critic (ProhibitMultiplePackages)
 		sub quz { return "quz" }
 	}
+	{ package IsaTest6;  ## no critic (ProhibitMultiplePackages)
+		our @ISA = ('IsaTest5'); }  ## no critic (ProhibitExplicitISA)
 	my $o1 = h2o {};
 	is_deeply get_isa($o1), [];
 	h2o -class=>'IsaTest1', {};
@@ -332,6 +334,45 @@ my $PACKRE = $Util::H2O::_PACKAGE_REGEX;  ## no critic (ProtectPrivateVars)
 	ok $o4->can("foo");
 	ok $o4->can("bar");
 	ok $o4->can("quz");
+	my $o6 = h2o -isa=>'IsaTest3', -class=>'IsaTest6', {};
+	ok $o6->isa('IsaTest6');
+	ok $o6->isa('IsaTest5');
+	ok $o6->isa('IsaTest3');
+	ok $o6->isa('IsaTest2');
+}
+# -parent
+{
+	ok exception { h2o -parent, {} };  # must be used with -class or -classify
+	ok exception { h2o -parent, -isa=>'Foo', {} };
+
+	my $o1 = h2o -class=>'ParOne', {};
+	is_deeply get_isa($o1), [];
+	is ref $o1, 'ParOne';
+
+	my $o2 = h2o -class=>'ParTwo', -parent, {};
+	is_deeply get_isa($o2), ['ParTwo'];
+	like ref $o2, qr/^ParTwo::_[0-9a-f]+$/;
+	ok $o2->isa('ParTwo');
+
+	my $o3 = h2o -classify=>'ParThree', -parent, {};
+	is_deeply get_isa($o3), ['ParThree'];
+	like ref $o3, qr/^ParThree::_[0-9a-f]+$/;
+	ok $o3->isa('ParThree');
+
+	{
+		package ParFour;  ## no critic (ProhibitMultiplePackages)
+		my $o4 = main::h2o -parent, -classify, {};
+		main::is_deeply main::get_isa($o4), ['ParFour'];
+		main::like ref $o4, qr/^ParFour::_[0-9a-f]+$/;
+		main::ok $o4->isa('ParFour');
+	}
+
+	{ package ParSix }  ## no critic (ProhibitMultiplePackages)
+	my $o5 = h2o -isa=>'ParSix', -class=>'ParFive', -parent, {};
+	is_deeply get_isa($o5), ['ParFive','ParSix'];
+	like ref $o5, qr/^ParFive::_[0-9a-f]+$/;
+	ok $o5->isa('ParFive');
+	ok $o5->isa('ParSix');
 }
 
 # -clean

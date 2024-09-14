@@ -47,6 +47,10 @@ our $VERSION = '0.26';
 our @EXPORT = qw/ h2o /;  ## no critic (ProhibitAutomaticExportation)
 our @EXPORT_OK = qw/ o2h /;
 
+#TODO Later: At some future release, we could assume everyone is up-to-date and/or
+# has access to older versions of the documentation, and therefore remove all of
+# the historical information about how different versions of the module behaved.
+
 =head1 Description
 
 This module allows you to turn hashrefs into objects, so that instead
@@ -112,27 +116,37 @@ method with the same name.
 Specify the class name into which to bless the object (as opposed to
 the default: a generated, unique package name in C<Util::H2O::>).
 
-I<Note:> If you use this option, C<-clean> defaults to I<false>,
-meaning that the package will stay in Perl's symbol table and use
-memory accordingly, and since this function installs the accessors in
-the package every time it is called, if you re-use the same package
-name, you will get "redefined" warnings. Therefore, if you want to
-create multiple objects in the same package, you should probably use
-C<-new> or C<-classify>.
+B<Important Caveat:> For the reasons described below,
+using this option by itself is usually not advisable.
+If you want to use C<h2o> for ad-hoc I<class> creation, you should probably
+use C<-new> in addition to this option, or just use C<-classify> instead.
+If on the other hand you want to create several ad-hoc objects that are all
+of a specific type (in other words, they all have the same parent class),
+you should use C<-parent> in addition to this option.
 
-If you wanted to generate a unique package name in a different package,
-you could use:
-C<< h2o -class => sprintf('My::Class::Name::_%x', $hash+0), $hash >>,
-perhaps even in combination with C<< -isa => 'My::Class::Name' >>.
-However, keep in mind that you shouldn't step into another class' namespace
-without knowing that this won't cause conflicts, and also that not using the
-default class names means that functions like C<o2h> will no longer identify
-the objects as coming from C<h2o>.
+I<Note 1:> The C<-parent> option changes the meaning of this option
+slightly, please see its documentation for details.
+
+I<Note 2:> If you use this option, C<-clean> defaults to I<false>,
+meaning that the package will stay in Perl's symbol table and use
+memory accordingly, and since
+B<C<h2o> installs the accessors (methods) in the package every time it is called>,
+if you re-use the same package name, you will get "redefined" warnings,
+telling you that something is wrong.
+This is why you should most likely use C<-new> or C<-classify>
+if you want to create multiple objects in the same package.
+
+I<Note 3:> Be aware that not using the default class names means that functions
+like C<o2h> will no longer identify the objects as coming from C<h2o>.
+
+I<Note 4:> Keep in mind that you shouldn't step into another class' namespace
+without knowing that this won't cause conflicts.
 
 =item C<< -classify => I<classname_string or $hashref> >>
 
 In the form C<< -classify => I<classname_string> >>, this is simply the short
-form of the options C<< -new, -meth, -class => I<classname_string> >>.
+form of the options C<< -new, -meth, -class => I<classname_string> >>;
+please see those options for details.
 
 As of v0.16, in the special form C<< -classify => I<$hashref> >>, where the
 C<-classify> B<must> be the B<last> option in C<@opts> before the
@@ -152,23 +166,48 @@ C<package>, or perhaps if you want to write your methods as regular C<sub>s:
      }, qw/ x y /;
  }
 
-Note C<h2o> will remain in the package's namespace, one possibility is that you
-could load L<namespace::clean> after you load this module.
+Note that in this example, C<h2o> will remain in the package's namespace.
+To avoid that, you could C<use Util::H2O ();> and then call the function as C<Util::H2O::h2o()>,
+or you could load L<namespace::clean> after you load this module.
 
 You might also note that in the above example, one could write C<angle> as a
-regular C<sub> in the package. And at that point, one might recongize the
+regular C<sub> in the package. And at that point, one might recognize the
 similarity between the code and what one can do with e.g.
 L<Class::Tiny|Class::Tiny> or even L<Moo|Moo>.
 
+I<Note> the C<-parent> option changes the meaning of this option
+slightly, please see its documentation for details.
+
+=item C<-parent>
+
+Convenience option that must be used together with C<< -class => 'YourClassName' >>,
+where it is the equivalent of
+C<< -class => sprintf('YourClassName::_%x', $hash+0), -isa => 'YourClassName' >>.
+In other words, using this option causes the object to become a subclass of the
+specified class name, with a unique class name under the specified name.
+
+I<Note> that this means that this option changes the meaning of the C<-class>/C<-classify>
+options a bit, in that the resulting object will no longer have exactly the package
+name you specified with those options.
+
+Please be aware of the various B<caveats> documented in C<-class> and C<-isa>, such as that
+superclass methods aren't called, and that C<-clean> will default to I<false>.
+
+If you use C<-isa> in addition to this option, those package names will be I<added>
+to C<@ISA> in addition to the class name as described above.
+This option was added in v0.26.
+
 =item C<< -isa => I<arrayref or scalar> >>
 
-Convenience option to set the L<C<@ISA>|perlvar/"@ISA"> variable in the package
+Convenience option to add items to the L<C<@ISA>|perlvar/"@ISA"> variable in the package
 of the object, so that the object inherits from that/those package(s).
-This option was added in v0.14.
+
+This option was added in v0.14, and its behavior was B<changed> slightly in v0.26:
+previously, this option would overwrite any previous value of C<@ISA>, now it appends.
 
 B<Warning:> The methods created by C<h2o> will not call superclass methods.
 This means the parent class' C<DESTROY> method(s) are not called, and any
-accessors generated from hash keys are blindly overriden.
+accessors generated from hash keys are blindly overridden.
 
 =item C<-new>
 
@@ -206,13 +245,14 @@ modifications to the hash's keyset. Defaults to I<true>.
 The C<-nolock> option is provided as a short form of C<< -lock=>0 >>.
 
 Keysets of objects created by the constructor generated by the
-C<-new> option are also locked. Versions of this module before
-v0.12 did not lock the keysets of new objects.
+C<-new> option are also locked.
 
-Versions of this module before v0.06 did not lock the keyset.
-Versions of this module as of v0.12 issue a warning on old Perls.
-(Versions of this module before v0.26 were compatible with Perls older than v5.8.9,
-where L<Hash::Util> and its C<lock_ref_keys> were not available.)
+Versions of this module before v0.06 did not lock the keyset at all.
+Versions of this module before v0.12 did not lock the keysets of new objects.
+Versions of this module from v0.12 to v0.24 (inclusive) issued a warning on old Perls.
+Versions of this module before v0.26 were compatible with Perls older than v5.8.9,
+where L<Hash::Util> and its C<lock_ref_keys> were not available, but newer versions
+require at least that version of perl, so that hash locking is always available.
 
 =item C<-nolock>
 
@@ -328,17 +368,18 @@ The (now blessed and optionally locked) C<$hashref>.
 our $_PACKAGE_REGEX = qr/\AUtil::H2O::_[0-9A-Fa-f]+\z/;
 
 sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
-	my ($recurse,$arrays,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro,$pass);
+	my ($recurse,$arrays,$meth,$class,$isa,$destroy,$new,$clean,$lock,$ro,$pass,$parent);
 	while ( @_ && $_[0] && !ref$_[0] && $_[0]=~/^-/ ) {
-		if ($_[0] eq '-recurse' ) { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
-		elsif ($_[0] eq '-arrays'){ $arrays  = shift }
-		elsif ($_[0] eq '-meth' ) { $meth    = shift }
-		elsif ($_[0] eq '-clean') { $clean   = (shift, shift()?1:0) }
-		elsif ($_[0] eq '-lock' ) { $lock    = (shift, shift()?1:0) }
-		elsif ($_[0] eq '-nolock'){ $lock = 0; shift }
-		elsif ($_[0] eq '-ro'   ) { $ro      = shift }
-		elsif ($_[0] eq '-new'  ) { $new     = shift }
-		elsif ($_[0] eq '-pass' ) {
+		if   ($_[0] eq '-recurse') { $recurse = shift }  ## no critic (ProhibitCascadingIfElse)
+		elsif ($_[0] eq '-arrays') { $arrays  = shift }
+		elsif ($_[0] eq '-meth'  ) { $meth    = shift }
+		elsif ($_[0] eq '-clean' ) { $clean   = (shift, shift()?1:0) }
+		elsif ($_[0] eq '-lock'  ) { $lock    = (shift, shift()?1:0) }
+		elsif ($_[0] eq '-nolock') { $lock = 0; shift }
+		elsif ($_[0] eq '-ro'    ) { $ro      = shift }
+		elsif ($_[0] eq '-new'   ) { $new     = shift }
+		elsif ($_[0] eq '-parent') { $parent  = shift }
+		elsif ($_[0] eq '-pass') {
 			$pass = (shift, shift);
 			croak "invalid -pass option value (must be 'undef' or 'ref')"
 				if !defined $pass || $pass ne 'undef' && $pass ne 'ref';
@@ -366,6 +407,7 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		}
 		else { croak "unknown option to h2o: '$_[0]'" }
 	}
+	croak "-parent must be used with -class or -classify" if $parent && !$class;
 	$clean = !defined $class unless defined $clean;
 	$lock = 1 unless defined $lock;
 	$recurse = 1 if $arrays;
@@ -405,7 +447,9 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 				{ h2o($arrays?-arrays:-recurse, -lock=>$lock, ($ro?-ro:()), $_) }
 		}
 	}
-	my $pack = defined $class ? $class : sprintf('Util::H2O::_%x', $hash+0);
+	my $pack = defined $class
+		? ( $parent ? sprintf('%s::_%x', $class, $hash+0) : $class )
+		: sprintf('Util::H2O::_%x', $hash+0);
 	for my $k (keys %keys) {
 		my $sub = $ro
 			? sub { my $self = shift; croak "this object is read-only" if @_; exists $self->{$k} ? $self->{$k} : undef }
@@ -438,7 +482,8 @@ sub h2o {  ## no critic (RequireArgUnpacking, ProhibitExcessComplexity)
 		};
 		{ no strict 'refs'; *{$pack.'::new'} = $sub }  ## no critic (ProhibitNoStrict)
 	}
-	if ($isa) { no strict 'refs'; @{$pack.'::ISA'} = @$isa }  ## no critic (ProhibitNoStrict)
+	if ($parent) { no strict 'refs'; push @{$pack.'::ISA'}, $class }  ## no critic (ProhibitNoStrict)
+	if ($isa) { no strict 'refs'; push @{$pack.'::ISA'}, @$isa }  ## no critic (ProhibitNoStrict)
 	bless $hash, $pack;
 	if ($ro) { lock_hashref $hash }
 	elsif ($lock) { lock_ref_keys $hash, keys %keys }

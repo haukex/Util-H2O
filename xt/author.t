@@ -33,7 +33,7 @@ BEGIN {
 	);
 }
 
-use Test::More tests => 3*@PERLFILES + 6;
+use Test::More tests => 3*@PERLFILES + 7;
 BEGIN { use_ok 'Util::H2O' }
 note explain \@PERLFILES;
 
@@ -92,6 +92,19 @@ subtest 'namespace::clean' => sub { plan tests=>4;
 	is $o->hello, "World!", 'getter';
 	is $o->test, "<def>", 'method';
 	ok !exists &Yet::Another::h2o, 'cleaned';
+};
+# and this is the other documented alternative for keeping the namespace clean
+subtest 'without import' => sub { plan tests=>4;
+	{
+		package And::Again;  ## no critic (ProhibitMultiplePackages)
+		use Util::H2O ();
+		Util::H2O::h2o -classify, { foo=>sub{"Foo!"} }, qw/bar/;
+		sub test2 { return "<".shift->bar.">" }
+	}
+	my $o = new_ok 'And::Again', [ bar=>"xyz" ];
+	is $o->foo, "Foo!", 'getter';
+	is $o->test2, "<xyz>", 'method';
+	ok !exists &And::Again::h2o, 'not present';
 };
 
 subtest 'destroy errors' => sub { plan tests=>2;
