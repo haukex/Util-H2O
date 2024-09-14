@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: cpanm namespace::clean Moo Type::Tiny
+        run: cpanm --notest namespace::clean Moo Type::Tiny
       - name: Tests and author tests
         run: prove -lv t xt
       - name: Coverage
