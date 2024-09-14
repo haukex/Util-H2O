@@ -135,7 +135,7 @@ END_CODE
 subtest '::Also synopsis' => sub { plan tests=>5;
 	my $verbatim = getverbatim($PERLFILES[1], qr/\b(?:synopsis)\b/i);
 	is @$verbatim, 1, 'verbatim block count' or diag explain $verbatim;
-	$$verbatim[0] =~ s/^\s*use\s+\Kparent\b/base/mg if $] lt '5.010001';
+	$$verbatim[0] =~ s/^(\s*use\s+)parent\b/${1}base/mg if $] lt '5.010001';
 	is capture_merged {
 		my $code = <<"END_CODE"; eval "{$code\n;1}" or die $@; ## no critic (ProhibitStringyEval, RequireCarping)
 			use warnings; use strict;
