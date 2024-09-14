@@ -9,9 +9,8 @@ It is a Perl extension for turning hashrefs into objects with accessors for keys
 Please see the module's documentation (POD) for details (try the command
 `perldoc lib/Util/H2O.pm`) and the file `Changes` for version information.
 
-[![Travis CI Build Status](https://travis-ci.org/haukex/Util-H2O.svg)](https://travis-ci.org/haukex/Util-H2O)
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/haukex/Util-H2O?svg=true)](https://ci.appveyor.com/project/haukex/util-h2o)
-[![Coverage Status](https://coveralls.io/repos/github/haukex/Util-H2O/badge.svg)](https://coveralls.io/github/haukex/Util-H2O)
+[![GitHub Actions Basic Tests Status](https://github.com/haukex/Util-H2O/actions/workflows/basic-tests.yml/badge.svg)](https://github.com/haukex/Util-H2O/actions/workflows/basic-tests.yml)
+[![GitHub Actions Full Tests Status](https://github.com/haukex/Util-H2O/actions/workflows/full-tests.yml/badge.svg)](https://github.com/haukex/Util-H2O/actions/workflows/full-tests.yml)
 [![Kwalitee Score](https://cpants.cpanauthors.org/dist/Util-H2O.svg)](https://cpants.cpanauthors.org/dist/Util-H2O)
 [![CPAN Testers](https://haukex.github.io/my-badges/Util-H2O.svg)](http://matrix.cpantesters.org/?dist=Util-H2O)
 
