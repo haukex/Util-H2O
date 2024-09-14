@@ -1,0 +1,66 @@
+# https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+name: Full Tests, Lint, and Coverage (all versions and OSes)
+on:
+  push:
+    # this workflow is somewhat expensive, so only run when explicitly tagged
+    tags:
+      - '**'
+jobs:
+  all-ver:
+    name: Perl ${{ matrix.perlver }} on Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        perlver:
+          - 5.8.9-buster
+          - 5.10.1-buster
+          - 5.12-buster
+          - 5.14-buster
+          - 5.16-buster
+          - 5.18-buster
+          - 5.20-buster
+          - 5.22-buster
+          - 5.24-buster
+          - 5.26-buster
+          - 5.28-buster
+          - 5.30-bullseye
+          - 5.32-bullseye
+          - 5.34-bullseye
+          - 5.36-bookworm
+          - 5.38-bookworm
+          - 5.40-bookworm
+    runs-on: ubuntu-latest
+    container:
+      image: perl:${{ matrix.perlver }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          cpanm --notest \
+            https://cpan.metacpan.org/authors/id/L/LE/LEONT/Test-Harness-3.50.tar.gz \
+            https://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302203.tar.gz
+      - run: prove -lv
+  all-os:
+    # Uses the Perl that comes preinstalled on all GH Action runners
+    # https://github.com/actions/runner-images?tab=readme-ov-file#available-images
+    name: Default Perl on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [Ubuntu, Windows, macOS]
+    runs-on: ${{ matrix.os }}-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: prove -lv
+  author-tests:
+    name: Author Tests
+    runs-on: ubuntu-latest
+    container:
+      # https://github.com/haukex/docker-perl-author-tests
+      image: ghcr.io/haukex/docker-perl-author-tests:v1.0
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests and author tests
+        run: prove -lv t xt
+      - name: Coverage
+        run: perl Makefile.PL && make authorcover
