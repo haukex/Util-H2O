@@ -1,0 +1,4 @@
+// https://aka.ms/devcontainer.json
+{
+    "postCreateCommand": ".devcontainer/initialize.sh"
+}

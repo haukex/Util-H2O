@@ -6,5 +6,6 @@ MANIFEST			This list of files
 README.md
 t/Util-H2O.t
 xt/author.t
+xt/cpanfile
 xt/mem.t
 xt/redef.t
