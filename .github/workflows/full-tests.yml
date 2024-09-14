@@ -35,10 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install dependencies
-        run: |
-          cpanm --notest \
-            https://cpan.metacpan.org/authors/id/L/LE/LEONT/Test-Harness-3.50.tar.gz \
-            https://cpan.metacpan.org/authors/id/E/EX/EXODIST/Test-Simple-1.302203.tar.gz
+        run: cpanm --notest App::Prove Test::More
       - run: prove -lv
   all-os:
     # Uses the Perl that comes preinstalled on all GH Action runners
@@ -60,9 +57,9 @@ jobs:
       image: ghcr.io/haukex/docker-perl-author-tests:v1.0
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: cpanm namespace::clean Moo Type::Tiny
       - name: Tests and author tests
-        run: |
-          cpanm namespace::clean Moo Type::Tiny
-          prove -lv t xt
+        run: prove -lv t xt
       - name: Coverage
         run: perl Makefile.PL && make authorcover
