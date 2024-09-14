@@ -1,0 +1,7 @@
+{
+    "recommendations": [
+        "oderwat.indent-rainbow",
+        "streetsidesoftware.code-spell-checker",
+    ]
+}
+/* vim: set filetype=javascript ts=4 sw=4 expandtab : */
