@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Tests and author tests
         run: |
-          cpanm namespace::clean Moo
+          cpanm namespace::clean Moo Type::Tiny
           prove -lv t xt
       - name: Coverage
         run: perl Makefile.PL && make authorcover
