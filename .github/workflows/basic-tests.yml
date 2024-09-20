@@ -2,6 +2,7 @@
 name: Basic Tests
 on:
   push:
+    # This workflow doesn't need to run on tags; to get that, specify only `branches` here:
     branches:
       - '**'
   pull_request:
