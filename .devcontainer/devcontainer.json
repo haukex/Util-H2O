@@ -1,4 +1,7 @@
 // https://aka.ms/devcontainer.json
 {
-    "postCreateCommand": ".devcontainer/initialize.sh"
+    "features": {
+        // https://github.com/haukex/devcontainer-features
+        "ghcr.io/haukex/devcontainer-features/perl:1": {}
+    }
 }
