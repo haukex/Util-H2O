@@ -5,6 +5,7 @@ on:
     # this workflow is somewhat expensive, so only run when explicitly tagged
     tags:
       - '**'
+  workflow_dispatch:
 jobs:
   all-ver:
     name: Perl ${{ matrix.perlver }} on Linux
