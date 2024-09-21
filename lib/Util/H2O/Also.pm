@@ -93,7 +93,7 @@ sub new {  ## no critic (RequireArgUnpacking)
     }
     Carp::croak("can't use -nolock and -ro together") if !$lock && $ro;
     my $hashref = shift;
-    Carp::croak("$class->new() only accepts plain hashrefs") unless ref $hashref eq 'HASH';
+    Carp::croak("->new() only accepts plain hashrefs") unless ref $hashref eq 'HASH';
     bless $hashref, $class;
     if ($ro) { Hash::Util::lock_hashref($hashref) }
     elsif ($lock) { Hash::Util::lock_ref_keys($hashref) }

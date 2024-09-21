@@ -1,5 +1,5 @@
 # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
-name: Full Tests, Lint, and 100% Coverage, all versions and OSes
+name: Full Tests, Lint, and 100% Coverage, all Perl versions and OSes
 on:
   push:
     # this workflow is somewhat expensive, so only run when explicitly tagged

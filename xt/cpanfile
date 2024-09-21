@@ -1,4 +1,4 @@
-# cpanm --installdeps .
+# cpanm --installdeps --notest .    # `--notest` is optional
 # NOTE: Keep in sync with https://github.com/haukex/docker-perl-author-tests/blob/main/cpanfile
 requires 'Test::Perl::Critic', '>= 1.04';
 requires 'Test::MinimumVersion', '>= 0.101083';
