@@ -1,5 +1,7 @@
 // https://aka.ms/devcontainer.json
 {
+    // apparently takes a *long* time to build: "image": "mcr.microsoft.com/devcontainers/universal:linux",
+    "image": "mcr.microsoft.com/devcontainers/base:debian",
     "features": {
         // https://github.com/haukex/devcontainer-features
         "ghcr.io/haukex/devcontainer-features/perl:1": {}
